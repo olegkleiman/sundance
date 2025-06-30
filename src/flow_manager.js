@@ -29,10 +29,10 @@ export const ToolsFlow = ai.defineFlow(
     {
         name: "ToolsFlow",
     },
-    async (input) => {
+    async (structuredPrompt) => {
         
         const generateOptions = {
-                // ...renderedPromptOptions,
+                ...structuredPrompt,
                 // tools: [executeGraphQL],
         }
         const llmResponse = await ai.generate(generateOptions);

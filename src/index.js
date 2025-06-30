@@ -70,15 +70,15 @@ app.get('/', (req, res) => {
 app.post('/init', async (req, res) => {
     logger.debug('Session before /init:', req.sessionID, req.session);
 
-    const data = req.body;
-    const question = data.question;
+    const userPrompt = req.body.data;
 
     const prompt = ai.prompt('general_agent'); // '.prompt' extension will be added automatically
-    const renderedPrompt = await prompt.render( { input: question } );
+    const renderedPrompt = await prompt.render( 
+        { userInput: userPrompt } 
+    );
 
     req.session.prompt = renderedPrompt;
-    req.session.query = question;
-    logger.debug(`Prompt: ${JSON.stringify(req.session.prompt)}\n Query: ${req.session.query}`);
+    logger.debug(`Prompt: ${JSON.stringify(req.session.prompt)}\n`);
 
     res.status(200).json({ message: 'Prompt received' })
 });
@@ -108,9 +108,8 @@ app.get('/chat_events', async (req, res) => {
         const userId = decoded["signInNames.citizenId"];
 
         const prompt = req.session.prompt;
-        const query = req.session.query;
 
-        const result = await ToolsFlow(query, {
+        const result = await ToolsFlow(prompt, {
                                         context: {
                                             headers,
                                             access_token,

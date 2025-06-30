@@ -2,7 +2,9 @@
 model: googleai/gemini-2.5-flash
 config:
     temperature: 0.9
-
+input:
+    schema:
+        userInput: string
 ---
 
 {{role "system"}}
