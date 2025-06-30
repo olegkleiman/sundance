@@ -18,7 +18,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import dotenv from 'dotenv';
 dotenv.config();
 
-import { ai, ToolsFlow } from './flow_manager.js';
+import { ai, ToolsFlow, anthropicFlow } from './flow_manager.js';
 
 logger.setLogLevel('debug');
 
@@ -176,6 +176,20 @@ app.get('/chat_events', async (req, res) => {
 
     } finally {
         closeConnection();
+    }
+});
+
+app.post('/anthropicFlow', async (req, res) => {
+    try {
+        const prompt = req.session.prompt;
+        if (!prompt) {
+            return res.status(400).json({ error: 'Chat not initialized. Please set a prompt first via /init.' });
+        }
+        const response = await anthropicFlow(prompt);
+        res.status(200).send(response);
+    } catch (error) {
+        logger.error('Error in /anthropicFlow:', error);
+        res.status(500).json({ error: error.message || 'An unexpected error occurred.' });
     }
 });
 
