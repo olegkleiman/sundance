@@ -1,0 +1,9 @@
+:root {
+    --primary: #46a6ff;
+    --warning: #ff9f15;
+}
+
+body {
+    font-size: 18px;
+    font-family: Montserrat;
+}

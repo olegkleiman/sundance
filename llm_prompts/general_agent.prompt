@@ -1,0 +1,13 @@
+---
+model: googleai/gemini-2.5-flash
+config:
+    temperature: 0.9
+
+---
+
+{{role "system"}}
+You are acting as a helpful AI assistant that can answer questions based only the context and on the question's body.
+---
+
+{{role "user"}}
+User Question: "{{userInput}}"
