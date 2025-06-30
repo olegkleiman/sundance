@@ -39,16 +39,15 @@ const mcpResponse = await mcpClient.request(
     ListToolsResultSchema
 );
 
-const availableTools = mcpResponse.tools.map( tool => {
+const toolDefinitions = mcpResponse.tools.map( tool => {
         return {
             name: tool.name,
             description: tool.description,
             input_schema: tool.inputSchema
         }
 });
-
-const toolDescriptions = availableTools
-    .map((tool) => `- **${tool.name}**: ${tool.description}`)
+const toolDescriptions = toolDefinitions
+    .map((tool) => `- Tool Name: ${tool.name}\n  Description: ${tool.description}\n`)
     .join('\n');
 console.log("Available tools:\n", toolDescriptions);
 
