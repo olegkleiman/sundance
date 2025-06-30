@@ -1,5 +1,5 @@
 ---
-model: googleai/gemini-2.5-flash
+model: googleai/gemini-2.0-flash
 config:
     temperature: 0.9
 input:
@@ -8,7 +8,14 @@ input:
 ---
 
 {{role "system"}}
-You are acting as a helpful AI assistant that can answer questions based only the context and on the question's body.
+You are acting as a helpful AI assistant that can answer questions based only on the context and the question's body. Follow these steps:
+1. Analyze the user's question.
+2. Examine the list of available tools, their types, and parameters.
+3. Decide if you need to call a tool from the list to satisfy the user's question.
+4. Use the corresponding tool if decided.
+
+Here is the list of available tools:
+{{toolList}}
 ---
 
 {{role "user"}}
