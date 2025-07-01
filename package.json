@@ -4,13 +4,15 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "start": "npx tsx src/index.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.55.1",
     "@genkit-ai/dev-local-vectorstore": "^1.14.0",
     "@genkit-ai/googleai": "^1.14.0",
     "@genkit-ai/vertexai": "^1.14.0",
@@ -23,6 +25,12 @@
     "zod": "^3.25.67"
   },
   "devDependencies": {
-    "@modelcontextprotocol/server-everything": "^2025.5.12"
+    "@modelcontextprotocol/server-everything": "^2025.5.12",
+    "@types/cors": "^2.8.19",
+    "@types/express-session": "^1.18.2",
+    "@types/node": "^24.0.8",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
   }
 }

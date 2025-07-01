@@ -1,6 +1,7 @@
 import express from 'express'
 import session from 'express-session'
 import cors from 'cors';
+
 import path from 'path';
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
@@ -8,48 +9,15 @@ const __dirname = path.dirname(__filename);
 import { logger } from 'genkit/logging';
 import { jwtDecode } from "jwt-decode";
 
-import {
-  CallToolResultSchema,
-  ListToolsResultSchema,
-} from "@modelcontextprotocol/sdk/types.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-
 import dotenv from 'dotenv';
 dotenv.config();
 
-import { ai, ToolsFlow, anthropicFlow } from './flow_manager.js';
+import { ai } from './genkit.js' //'./genkit.ts';
+import { ToolsFlow } from './tools_flow.js';
+import { anthropicFlow } from './anthropicFlow.js';
+import { mcpClient, toolDescriptions } from './mcpClient.js';
 
 logger.setLogLevel('debug');
-
-const mcpClient = new Client({
-  name: "Sundance MCP Client",
-  version: "1.0.0",
-});
-
-const transport = new StdioClientTransport({
-      command: "npx",
-      args: ["@modelcontextprotocol/server-everything", "stdio"],
-    });
-await mcpClient.connect(transport);
-console.log("Connected to MCP Server")
-// Get available tools
-const mcpResponse = await mcpClient.request(
-    { method: "tools/list" },
-    ListToolsResultSchema
-);
-
-const toolDefinitions = mcpResponse.tools.map( tool => {
-        return {
-            name: tool.name,
-            description: tool.description,
-            input_schema: tool.inputSchema
-        }
-});
-const toolDescriptions = toolDefinitions
-    .map((tool) => `- Tool Name: ${tool.name}\n  Description: ${tool.description}\n`)
-    .join('\n');
-console.log("Available tools:\n", toolDescriptions);
 
 const app = express();
 
@@ -87,10 +55,10 @@ app.post('/init', async (req, res) => {
     req.session.prompt = renderedPrompt;
     logger.debug(`Prompt: ${JSON.stringify(req.session.prompt)}\n`);
 
-    res.status(200).json({ message: 'Prompt received' })
+    res.status(200).json({ message: 'Prompt received' });
 });
 
-const validateCall = async (req) => {
+const validateCall = async (req: express.Request) => {
         const headers = req.headers;
         const access_token = headers?.authorization?.split(' ')[1];
         if (!access_token) {
@@ -98,6 +66,9 @@ const validateCall = async (req) => {
         }
 
         const token_validation_url = process.env.TOKEN_VALIDATION_URL;
+        if (!token_validation_url) {
+            throw new Error('TOKEN_VALIDATION_URL is not defined in environment variables.');
+        }
         const validationRequestBody = {
             clientId: process.env.CLIENT_ID
         }
@@ -115,9 +86,9 @@ const validateCall = async (req) => {
             throw new Error(errorJson.developerMessage);
         }
 
-        const decoded = jwtDecode(access_token);
-        return decoded["signInNames.citizenId"];
-
+        const decodedJwt = jwtDecode(access_token);
+        if( 'signInNames.citizenId' in decodedJwt )
+            return decodedJwt['signInNames.citizenId'];
 };
 
 app.get('/chat_events', async (req, res) => {
@@ -168,11 +139,9 @@ app.get('/chat_events', async (req, res) => {
             res.write(`event:message\ndata: ${textContent}\n\n`);
         }
 
-    } catch (error) {
+    } catch (error: any) {
         logger.error(error)
-
-        const errorMessage = JSON.stringify({ error: error.message || 'An unexpected error occurred.' });
-        res.write(`event: error\ndata: ${errorMessage}\n\n`);
+        res.write(`event: error\ndata: ${error.message}\n\n`);
 
     } finally {
         closeConnection();
@@ -187,9 +156,9 @@ app.post('/anthropicFlow', async (req, res) => {
         }
         const response = await anthropicFlow(prompt);
         res.status(200).send(response);
-    } catch (error) {
+    } catch (error: any) {
         logger.error('Error in /anthropicFlow:', error);
-        res.status(500).json({ error: error.message || 'An unexpected error occurred.' });
+        res.status(500).json({ error: error?.message || 'An unexpected error occurred.' });
     }
 });
 
