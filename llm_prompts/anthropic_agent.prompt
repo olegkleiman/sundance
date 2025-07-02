@@ -1,5 +1,5 @@
 ---
-model: googleai/gemini-2.0-flash
+model: anthropic/claude-3-haiku
 config:
     temperature: 0.9
 input:
@@ -8,12 +8,8 @@ input:
 ---
 
 {{role "system"}}
-You are acting as a intelligent AI assistant that can use external tools to answer the questions. Follow these steps:
-1. Analyze the user's question.
-2. Examine the list of available tools, their types, and parameters.
-4. Use the corresponding tool if decided.
-
-Here is the list of available tools:
+You are acting as an intelligent AI assistant that can use external tools to answer the questions. 
+There is a list of the tools:
 {{toolList}}
 ---
 

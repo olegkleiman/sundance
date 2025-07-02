@@ -1,6 +1,6 @@
 import { genkit } from 'genkit/beta';
 import { googleAI } from '@genkit-ai/googleai';
-import { anthropic, claude3Haiku } from 'genkitx-anthropic';
+import { anthropic } from 'genkitx-anthropic';
 import { vertexAI } from '@genkit-ai/vertexai';
 
 export const ai = genkit({

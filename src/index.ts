@@ -43,8 +43,9 @@ app.post('/init', async (req, res) => {
     logger.debug('Session before /init:', req.sessionID, req.session);
 
     const userPrompt = req.body.data;
+    const promptTemplate = req.body.prompt_template || 'general_agent';
 
-    const prompt = ai.prompt('general_agent'); // '.prompt' extension will be added automatically
+    const prompt = ai.prompt(promptTemplate); // '.prompt' extension will be added automatically
     const renderedPrompt = await prompt.render( 
         { 
             userInput: userPrompt,
@@ -148,7 +149,7 @@ app.get('/chat_events', async (req, res) => {
     }
 });
 
-app.post('/anthropicFlow', async (req, res) => {
+app.get('/anthropicFlow', async (req, res) => {
     try {
         const prompt = req.session.prompt;
         if (!prompt) {
