@@ -22,7 +22,7 @@ const mcpResponse = await mcpClient.request(
     ListToolsResultSchema
 );
 
-const toolDefinitions = mcpResponse.tools.map( tool => {
+export const toolDefinitions = mcpResponse.tools.map( tool => {
         return {
             name: tool.name,
             description: tool.description,

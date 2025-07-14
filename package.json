@@ -12,6 +12,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@apollo/client": "^3.13.8",
     "@genkit-ai/dev-local-vectorstore": "^1.14.0",
     "@genkit-ai/googleai": "^1.14.0",
     "@genkit-ai/vertexai": "^1.14.0",
@@ -20,6 +21,7 @@
     "express": "^5.1.0",
     "express-session": "^1.18.1",
     "genkitx-anthropic": "^0.23.1",
+    "graphql": "^16.11.0",
     "jwt-decode": "^4.0.0",
     "zod": "^3.25.67"
   },

@@ -1,3 +1,10 @@
+// 
+// index.ts
+// Sundance project
+//
+// Created by: Oleg Kleiman on 14/07/2025
+// 
+
 import express from 'express'
 import session from 'express-session'
 import cors from 'cors';
@@ -15,7 +22,8 @@ dotenv.config();
 import { ai } from './genkit.js' //'./genkit.ts';
 import { ToolsFlow } from './tools_flow.js';
 import { anthropicFlow } from './anthropicFlow.js';
-import { mcpClient, toolDescriptions } from './mcpClient.js';
+import { toolDefinitions, toolDescriptions } from './mcpClient.js';
+import { sundanceFlow } from './sundanceFlow.js';
 
 logger.setLogLevel('debug');
 
@@ -92,6 +100,10 @@ const validateCall = async (req: express.Request) => {
             return decodedJwt['signInNames.citizenId'];
 };
 
+app.get('/tools', async (req, res) => {
+    return res.status(200).send(toolDefinitions);
+})
+
 app.get('/chat_events', async (req, res) => {
     
     if( !req.session || !req.session.prompt ) {
@@ -148,6 +160,18 @@ app.get('/chat_events', async (req, res) => {
         closeConnection();
     }
 });
+
+app.post('/chat', async (req, res) => {
+    const userPrompt = req.body.data;
+
+    const response = await sundanceFlow(userPrompt, {
+        context: {
+            headers: req.headers,
+            access_token: req.headers.authorization?.split(' ')[1]
+        }
+    });
+    res.json(response);
+})
 
 app.get('/anthropicFlow', async (req, res) => {
     try {

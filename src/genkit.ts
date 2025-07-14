@@ -11,4 +11,5 @@ export const ai = genkit({
     ],
     promptDir: './llm_prompts'
     // enableTracingAndMetrics: true
+
 })

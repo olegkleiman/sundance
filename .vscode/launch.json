@@ -9,7 +9,10 @@
       "runtimeArgs": ["tsx", "src/index.ts"],
       "cwd": "${workspaceFolder}",
       "skipFiles": ["<node_internals>/**",
-                    "node_modules/**"]
+                    "node_modules/**"],
+      "sourceMaps": true,
+    
+      "outFiles": ["${workspaceFolder}/**/*.js"],
     }
   ]
 }

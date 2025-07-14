@@ -1,0 +1,210 @@
+#directive @defer(
+    #     label: String
+    #     if: Boolean
+    # ) on FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+scalar Date
+
+# An object with a Globally Unique ID
+interface Node {
+    id: ID!
+}
+
+type UserParkingTicketEdge {
+    cursor: String!
+    node: ParkingTicket
+}
+
+type Error {
+    message: String!
+}
+
+type PageInfo {
+    endCursor: ID
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+    startCursor: ID        
+}
+
+type UserParkingTicketConnection {
+    edges: [UserParkingTicketEdge]
+    pageInfo: PageInfo!
+}
+
+union MeResult = User | Error
+
+input AddressInput {
+
+    street: String
+    building: String
+    appartment: String
+}
+
+
+type Address {
+    """
+    The street name of the address.
+    """
+    street: String
+    """
+    The building number or name.
+    """
+    building: String
+    """
+    The apartment or unit number.
+    """
+    appartment: String
+}
+
+type RealEstatePiece implements Node {
+    id: ID!
+
+    """
+    The account number associated with the real estate piece.
+    """
+    accountNumber: String!
+    """
+    The address of the real estate piece.
+    """
+    address: Address!
+    """
+    List of partners associated with the real estate piece.
+    """
+    partners: [String]
+}
+
+type MunicipalAccount implements Node {
+    id: ID!
+
+    """The account number associated with this municipal account."""
+    accountNumber: String
+    
+    """The address associated with this municipal account."""
+    address: String
+
+    """List of tax payments associated with this municipal account."""
+    payments: [TaxPayment]
+    
+    """The refund of this municipal account."""
+    refund: String
+
+}
+
+type TaxPayment implements Node {
+    id: ID!
+    
+    """The period for which the tax payment was made."""
+    period: String
+    
+    """The voucher number for the payment."""
+    voucherNumber: String
+    
+    """The amount of the tax payment.""" 
+    amount: String
+}
+
+type ParkingTag implements Node {
+    id: ID!
+    tagNumber: String!
+    address: String
+    geographicArea: String
+    vehicleNumber: String!
+    expirationDate: Date
+}
+
+type ParkingTicket implements Node {
+    id: ID!
+
+    """The ticket number."""
+    ticketNumber: String!
+
+    """The vehicle number."""
+    vehicleNumber: String!
+    
+    """The amount of the ticket."""
+    amount: String!
+
+    """The date and time when the ticket was issued."""
+    issuedAt: String
+
+    """The date and time when the ticket was issued."""
+    issuedWhen: Date!
+
+    """The description of the violation"""
+    description: String
+
+    images: [String!]
+    lastPaymnetDate: Date
+}
+
+type PublicEvent implements Node {
+    id: ID!
+
+    """The name of the event."""
+    name: String!
+
+    """The description of the event."""
+    description: String
+
+    """The date of the event."""
+    date: Date
+
+    """The address of the event."""
+    address: String
+
+    """The link to the event."""
+    link: String
+
+    """The image of the event."""
+    image: String
+}
+
+type PublicEventsEdge {
+    cursor: ID!
+    node: PublicEvent
+}
+
+type PublicEventConnection {
+    totalCount: Int
+    edges: [PublicEventsEdge]
+    pageInfo: PageInfo!
+}
+
+type User implements Node {
+    id: ID!
+
+    """The first name of the user."""
+    name: String
+
+    """The last name of the user."""
+    lastName: String
+
+    email: String
+
+    """The phone number of the user."""
+    phoneNumber: String
+
+    """The user ID (Citizen ID) of the user."""
+    userId: String!
+
+    """The address of the user."""
+    address: String
+
+    interests: [String]
+    publicEventsConnection(filter: String, first: Int, after: ID, last: Int,  before: String): PublicEventConnection!
+
+    profilePicture: String
+
+    municipal_taxes(accountNumber: String, address: AddressInput): [MunicipalAccount]
+    parkingTags : [ParkingTag]
+    parkingTickets(ticketNumber: String): [ParkingTicket]
+    realEstatePieces: [RealEstatePiece]
+}
+
+type Query {
+    me: User
+}
+
+type Mutation {
+    setProfilePicture(base64: String) : Boolean
+}
