@@ -88,7 +88,7 @@ export const sundanceFlow = ai.defineFlow(
     {
         name: "sundanceFlow",
         inputSchema: z.string(),
-        // outputSchema: z.string(),
+        outputSchema: z.string(),
     },
     async (userInput: string) => {
 
