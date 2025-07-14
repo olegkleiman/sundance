@@ -185,7 +185,7 @@ type User implements Node {
     phoneNumber: String
 
     """The user ID (Citizen ID) of the user."""
-    userId: String!
+    citizenId: String!
 
     """The address of the user."""
     address: String

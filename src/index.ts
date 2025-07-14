@@ -5,7 +5,7 @@
 // Created by: Oleg Kleiman on 14/07/2025
 // 
 
-import express from 'express'
+import express, { Request, Response, NextFunction } from 'express';
 import session from 'express-session'
 import cors from 'cors';
 
@@ -67,7 +67,7 @@ app.post('/init', async (req, res) => {
     res.status(200).json({ message: 'Prompt received' });
 });
 
-const validateCall = async (req: express.Request) => {
+export async function authenticateToken(req: Request, res: Response, next: NextFunction): Promise<void> {
         const headers = req.headers;
         const access_token = headers?.authorization?.split(' ')[1];
         if (!access_token) {
@@ -97,7 +97,9 @@ const validateCall = async (req: express.Request) => {
 
         const decodedJwt = jwtDecode(access_token);
         if( 'signInNames.citizenId' in decodedJwt )
-            return decodedJwt['signInNames.citizenId'];
+            req.citizenId = decodedJwt['signInNames.citizenId'];
+
+        next()
 };
 
 app.get('/tools', async (req, res) => {
@@ -132,7 +134,7 @@ app.get('/chat_events', async (req, res) => {
     req.on('close', closeConnection);
 
     try {
-        const userId = await validateCall(req);
+
         const prompt = req.session.prompt;
 
         const stream = await ToolsFlow(prompt
@@ -141,7 +143,7 @@ app.get('/chat_events', async (req, res) => {
                                     //     {
                                     //         headers,
                                     //         access_token,
-                                    //         userId
+                                    //         citizenId
                                     //     }
                                     // }
                                 );
@@ -161,13 +163,14 @@ app.get('/chat_events', async (req, res) => {
     }
 });
 
-app.post('/chat', async (req, res) => {
+app.post('/chat', authenticateToken, async (req, res) => {  
     const userPrompt = req.body.data;
 
     const response = await sundanceFlow(userPrompt, {
         context: {
             headers: req.headers,
-            access_token: req.headers.authorization?.split(' ')[1]
+            access_token: req.headers.authorization?.split(' ')[1],
+            citizenId: req.citizenId
         }
     });
     res.json(response);

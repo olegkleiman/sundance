@@ -2,6 +2,7 @@ import { genkit } from 'genkit/beta';
 import { googleAI } from '@genkit-ai/googleai';
 import { anthropic } from 'genkitx-anthropic';
 import { vertexAI } from '@genkit-ai/vertexai';
+import { logger } from 'genkit/logging';
 
 export const ai = genkit({
     plugins: [
@@ -13,3 +14,4 @@ export const ai = genkit({
     // enableTracingAndMetrics: true
 
 })
+

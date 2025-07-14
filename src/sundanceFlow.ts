@@ -16,6 +16,7 @@ import * as fs from 'fs/promises';
 import { fileURLToPath } from 'url';
 
 import * as z from 'zod';
+import { logger } from 'genkit/logging';
 import { ai } from './genkit.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -39,22 +40,21 @@ const apolloClient = new ApolloClient({
 });
 
 const executeGraphQL = ai.defineTool({
-        name: "executedGraphQL",
+        name: "executedraphQL",
         description: "Executes a GraphQL query to retrieve user data. Use this tool to answer any user question about their data.",
         inputSchema: z.object({
             query: z.string().describe("A valid GraphQL query."),
         })
     },
     async ({query}, { context }) => {
-        
-        console.log(`The tool called with query: ${query}`);
+
+        logger.debug(`The tool called with query: ${query}`, { userId: context.citizenId });
 
         try {
 
-            if(query) {
+            if(query) { 
 
-                let parsedQuery;
-                parsedQuery = parse(query);
+                const parsedQuery = parse(query);
                 const validationErrors = validate(graphQLSchema, parsedQuery);
                 if (validationErrors.length > 0) {
                     const errorMessages = validationErrors.map(error => error.message).join(', ');
@@ -72,13 +72,13 @@ const executeGraphQL = ai.defineTool({
                     }                    
                 });
 
-                console.log(graphql_result.data)
+                logger.debug(graphql_result.data, { userId: context.citizenId });
 
                 return graphql_result.data;
             }
                 
         } catch(error) {
-            console.error(error);
+            logger.error(error, { userId: context.citizenId });
             throw error;
         }
     }   
@@ -87,10 +87,10 @@ const executeGraphQL = ai.defineTool({
 export const sundanceFlow = ai.defineFlow(
     {
         name: "sundanceFlow",
-        inputSchema: z.any(),
+        inputSchema: z.string(),
         // outputSchema: z.string(),
     },
-    async (userInput: any) => {
+    async (userInput: string) => {
 
         const prompt = ai.prompt("graphql_agent");
         const rendered_prompt = await prompt.render(
@@ -99,7 +99,7 @@ export const sundanceFlow = ai.defineFlow(
                 userInput: userInput                
             }
         );
-        console.log(rendered_prompt);
+        logger.debug(rendered_prompt);
 
         const llmResponse = await ai.generate({
             ...rendered_prompt,
