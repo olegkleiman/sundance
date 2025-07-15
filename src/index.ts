@@ -25,8 +25,6 @@ import { anthropicFlow } from './anthropicFlow.js';
 import { toolDefinitions, toolDescriptions } from './mcpClient.js';
 import { sundanceFlow } from './sundanceFlow.js';
 
-logger.setLogLevel('debug');
-
 const app = express();
 
 app.use(express.static(path.join(__dirname, '../public')));
@@ -67,11 +65,21 @@ app.post('/init', async (req, res) => {
     res.status(200).json({ message: 'Prompt received' });
 });
 
+const tokenCache = new Map<string, { payload: any; timestamp: number }>();
+const TOKEN_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 export async function authenticateToken(req: Request, res: Response, next: NextFunction): Promise<void> {
         const headers = req.headers;
         const access_token = headers?.authorization?.split(' ')[1];
         if (!access_token) {
             throw new Error('Authorization token not found.');
+        }
+
+        const cached = tokenCache.get(access_token);
+        if (cached && Date.now() - cached.timestamp < TOKEN_CACHE_TTL) {
+            req.citizenId = cached.payload.citizenId;
+            return next();
+            return;
         }
 
         const token_validation_url = process.env.TOKEN_VALIDATION_URL;
@@ -91,11 +99,13 @@ export async function authenticateToken(req: Request, res: Response, next: NextF
         })
         if( !validation_resp.ok ) {
             const errorJson = await validation_resp.json();
+            tokenCache.delete(access_token); // Evict invalid token from cache
             logger.error(errorJson);
             throw new Error(errorJson.developerMessage);
         }
 
         const decodedJwt = jwtDecode(access_token);
+        tokenCache.set(access_token, { payload: decodedJwt, timestamp: Date.now() });
         if( 'signInNames.citizenId' in decodedJwt )
             req.citizenId = decodedJwt['signInNames.citizenId'];
 
@@ -163,17 +173,44 @@ app.get('/chat_events', async (req, res) => {
     }
 });
 
-app.post('/chat', authenticateToken, async (req, res) => {  
-    const userPrompt = req.body.data;
+app.post('/chat', authenticateToken, async (req, res) => { 
+    
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
 
-    const response = await sundanceFlow(userPrompt, {
-        context: {
-            headers: req.headers,
-            access_token: req.headers.authorization?.split(' ')[1],
-            citizenId: req.citizenId
+    const closeConnection = () => {
+        if (!res.writableEnded) {
+            res.end();
+            logger.debug(`SSE connection closed for session ${req.sessionID}`);
         }
-    });
-    res.json(response);
+    };
+    req.on('close', closeConnection);
+
+    try {
+        const userPrompt = req.body.data;
+
+        const stream = await sundanceFlow(userPrompt, {
+            context: {
+                headers: req.headers,
+                access_token: req.headers.authorization?.split(' ')[1],
+                citizenId: req.citizenId
+            }
+        });
+
+        for await (const chunk of stream) {
+            const textContent = chunk.text || '';
+            logger.debug(textContent);
+
+            res.write(`event:message\ndata: ${textContent}\n\n`);
+        }
+    } catch (error: any) {
+        logger.error(error)
+        res.write(`event: error\ndata: ${error.message}\n\n`);
+    } finally {
+        closeConnection();
+    }
 })
 
 app.get('/anthropicFlow', async (req, res) => {

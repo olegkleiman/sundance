@@ -88,7 +88,7 @@ export const sundanceFlow = ai.defineFlow(
     {
         name: "sundanceFlow",
         inputSchema: z.string(),
-        outputSchema: z.string(),
+        outputSchema: z.any(),
     },
     async (userInput: string) => {
 
@@ -101,11 +101,13 @@ export const sundanceFlow = ai.defineFlow(
         );
         logger.debug(rendered_prompt);
 
-        const llmResponse = await ai.generate({
+        console.time('ai.generateStream');
+        const { stream } = ai.generateStream({
             ...rendered_prompt,
             tools: [executeGraphQL]
         });
+        console.timeEnd('ai.generateStream');
 
-        return llmResponse.text;
+        return stream;
     }
 )
