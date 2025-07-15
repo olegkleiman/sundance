@@ -45,22 +45,23 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../public', 'index.html'));
 });
 
-app.post('/init', async (req, res) => {
+app.post('/init', authenticateToken, async (req, res) => {
     logger.debug('Session before /init:', req.sessionID, req.session);
 
-    const userPrompt = req.body.data;
-    const promptTemplate = req.body.prompt_template || 'general_agent';
+    const userUtterance = req.body.data;
+    const promptTemplate = 'graphql_agent';
 
     const prompt = ai.prompt(promptTemplate); // '.prompt' extension will be added automatically
     const renderedPrompt = await prompt.render( 
         { 
-            userInput: userPrompt,
+            userInput: userUtterance,
             toolList: toolDescriptions
          } 
     );
 
-    req.session.prompt = renderedPrompt;
-    logger.debug(`Prompt: ${JSON.stringify(req.session.prompt)}\n`);
+    req.session.userUtterance = userUtterance;
+    req.session.access_token = req.access_token;
+    logger.debug(`User utterance: ${JSON.stringify(req.session.userUtterance)}\n`);
 
     res.status(200).json({ message: 'Prompt received' });
 });
@@ -104,6 +105,8 @@ export async function authenticateToken(req: Request, res: Response, next: NextF
             throw new Error(errorJson.developerMessage);
         }
 
+        req.access_token = access_token;
+
         const decodedJwt = jwtDecode(access_token);
         tokenCache.set(access_token, { payload: decodedJwt, timestamp: Date.now() });
         if( 'signInNames.citizenId' in decodedJwt )
@@ -145,9 +148,9 @@ app.get('/chat_events', async (req, res) => {
 
     try {
 
-        const prompt = req.session.prompt;
+        const userUtterance = req.session.userUtterance;
 
-        const stream = await ToolsFlow(prompt
+        const stream = await ToolsFlow(userUtterance
                                     // {
                                     //     context: 
                                     //     {
@@ -173,8 +176,18 @@ app.get('/chat_events', async (req, res) => {
     }
 });
 
-app.post('/chat', authenticateToken, async (req, res) => { 
+app.get('/chat', async (req, res) => { 
     
+    if( !req.session || !req.session.userUtterance ) {
+        logger.warn(`SSE request from session (${req.sessionID}) without a prompt.`);
+
+        res.flushHeaders(); // Send headers before writing event
+        res.write('event: error\ndata: {"message": "Chat not initialized. Please set a prompt first via /init."}\n\n');
+        res.end();
+
+        return;        
+    }
+
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
@@ -189,13 +202,13 @@ app.post('/chat', authenticateToken, async (req, res) => {
     req.on('close', closeConnection);
 
     try {
-        const userPrompt = req.body.data;
+        const userUtterance = req.session.userUtterance;
 
-        const stream = await sundanceFlow(userPrompt, {
+        const stream = await sundanceFlow(userUtterance, {
             context: {
                 headers: req.headers,
-                access_token: req.headers.authorization?.split(' ')[1],
-                citizenId: req.citizenId
+                access_token: req.session.access_token,
+                citizenId: req.session.citizenId
             }
         });
 
@@ -215,11 +228,11 @@ app.post('/chat', authenticateToken, async (req, res) => {
 
 app.get('/anthropicFlow', async (req, res) => {
     try {
-        const prompt = req.session.prompt;
-        if (!prompt) {
+        const userUtterance = req.session.userUtterance;
+        if (!userUtterance) {
             return res.status(400).json({ error: 'Chat not initialized. Please set a prompt first via /init.' });
         }
-        const response = await anthropicFlow(prompt);
+        const response = await anthropicFlow(userUtterance);
         res.status(200).send(response);
     } catch (error: any) {
         logger.error('Error in /anthropicFlow:', error);

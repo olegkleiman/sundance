@@ -2,7 +2,9 @@ import 'express-session'
 
 declare module 'express-session' {
     interface SessionData {
-        prompt?: any;
+        userUtterance?: any;
+        access_token?: string;
+        citizenId?: string;
     }
 }
 
@@ -14,5 +16,6 @@ type CustomJwtPayload = {
 declare module 'express-serve-static-core' {
     interface Request {
       citizenId?: string;
+      access_token?: string;
     }
 }

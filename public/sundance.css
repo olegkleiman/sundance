@@ -7,3 +7,163 @@ body {
     font-size: 18px;
     font-family: Montserrat;
 }
+
+.icon-control {
+    border: none;
+    background: linear-gradient(90deg, #46a6ff 0%, #7f53ac 100%);
+    outline: none;
+    padding: 8px;
+    box-shadow: 0 4px 16px 0 rgba(127, 83, 172, 0.10), 0 2px 8px rgba(70, 166, 255, 0.08);
+    cursor: pointer;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.4s, box-shadow 0.2s;
+}
+
+.icon-control:hover {
+    background: linear-gradient(90deg, #7f53ac 0%, #46a6ff 100%);
+    box-shadow: 0 6px 24px 0 rgba(127, 83, 172, 0.18), 0 4px 16px rgba(70, 166, 255, 0.13);
+}
+
+.icon-control svg, .icon-control img {
+    width: 36px;
+    height: 36px;
+    display: block;
+}
+
+.player-container {
+    background: linear-gradient(90deg, #46a6ff 0%, #7f53ac 100%);
+    border-radius: 32px;
+    box-shadow: 0 4px 16px 0 rgba(127, 83, 172, 0.15), 0 2px 8px rgba(70, 166, 255, 0.08);
+    padding: 32px 0 24px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: fit-content;
+    margin: 32px auto 24px auto;
+}
+
+.brand-animated-rect {
+    width: 340px;
+    height: 28px;
+    margin: 0 auto 24px auto;
+    border-radius: 16px;
+    background: linear-gradient(270deg, #46a6ff, #7f53ac, #ff9f15, #46a6ff);
+    background-size: 600% 600%;
+    animation: gradientMove 3s ease-in-out infinite;
+    box-shadow: 0 2px 10px 0 rgba(127, 83, 172, 0.10);
+}
+
+@keyframes gradientMove {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+    background: linear-gradient(90deg, #46a6ff 0%, #7f53ac 100%);
+    border-radius: 32px;
+    box-shadow: 0 4px 16px 0 rgba(127, 83, 172, 0.15), 0 2px 8px rgba(70, 166, 255, 0.08);
+    padding: 32px 0 24px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: fit-content;
+    margin: 32px auto 24px auto;
+}
+
+
+#ticker-container {
+    width: 100%;
+    max-width: 100%;
+    height: 40px;
+    background: #fff;
+    overflow: hidden;
+    position: relative;
+  }
+
+  #ticker {
+    position: absolute;
+    white-space: nowrap;
+    left: 100%;
+  }
+
+.login-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 8px 16px;
+    font-size: 14px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}  
+
+.login-btn {
+    position: fixed;
+    top: 16px;
+    right: 24px;
+    padding: 10px 22px;
+    background: linear-gradient(90deg, #46a6ff 0%, #7f53ac 100%);
+    color: #fff;
+    border: none;
+    border-radius: 24px;
+    font-size: 1rem;
+    font-family: Montserrat, sans-serif;
+    box-shadow: 0 4px 16px 0 rgba(127, 83, 172, 0.15), 0 2px 8px rgba(70, 166, 255, 0.08);
+    cursor: pointer;
+    z-index: 1000;
+    transition: background 0.4s, box-shadow 0.2s;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+.login-btn:hover {
+    background: linear-gradient(90deg, #7f53ac 0%, #46a6ff 100%);
+    box-shadow: 0 6px 24px 0 rgba(127, 83, 172, 0.22), 0 4px 16px rgba(70, 166, 255, 0.13);
+}
+
+/* Modal styles */
+#login-modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: auto;
+    background: rgba(44, 62, 80, 0.55);
+    align-items: center;
+    justify-content: center;
+}
+#login-modal .modal-content {
+    background: #fff;
+    margin: 10vh auto;
+    padding: 32px 28px 24px 28px;
+    border-radius: 16px;
+    max-width: 360px;
+    box-shadow: 0 8px 32px 0 rgba(46,54,80,0.16);
+    position: relative;
+    text-align: center;
+}
+#login-modal .close {
+    position: absolute;
+    top: 12px;
+    right: 18px;
+    font-size: 2rem;
+    color: #888;
+    cursor: pointer;
+    font-weight: bold;
+    transition: color 0.2s;
+}
+#login-modal .close:hover {
+    color: #d32f2f;
+}
+
+    background: linear-gradient(90deg, #7f53ac 0%, #46a6ff 100%);
+    box-shadow: 0 6px 24px 0 rgba(127, 83, 172, 0.22), 0 4px 16px rgba(70, 166, 255, 0.13);
+}
