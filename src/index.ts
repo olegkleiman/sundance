@@ -60,8 +60,9 @@ app.post('/init', authenticateToken, async (req, res) => {
     );
 
     req.session.userUtterance = userUtterance;
-    req.session.access_token = req.access_token;
     logger.debug(`User utterance: ${JSON.stringify(req.session.userUtterance)}\n`);
+    req.session.access_token = req.access_token;
+    req.session.citizenId = req.citizenId;
 
     res.status(200).json({ message: 'Prompt received' });
 });
@@ -175,6 +176,45 @@ app.get('/chat_events', async (req, res) => {
         closeConnection();
     }
 });
+
+app.post('/login', async (req, res) => {
+    
+    const otp = req.body.otp;
+    const phoneNumber = req.body.phoneNumber;
+
+    const clientId = process.env.CLIENT_ID;
+    const scope = process.env.LOGIN_SCOPE;
+    const deviceId = process.env.LOGIN_DEVICE_ID;
+
+    const loginPayload = {
+        phoneNumber: phoneNumber,
+        otp: otp,
+        clientId: clientId,
+        scope: scope,
+        deviceId: deviceId
+      };
+
+      const loginUrl = process.env.LOGIN_URL;
+      if( !loginUrl ) {
+        throw new Error('LOGIN_URL is not defined in environment variables.');
+      }
+
+      const login_response = await fetch(loginUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(loginPayload)
+      });
+      if( !login_response.ok ) {
+        throw new Error('Failed to login');
+      }
+
+      const loginData = await login_response.json();
+      return res.json({
+        access_token: loginData.access_token
+      })
+})
 
 app.get('/chat', async (req, res) => { 
     

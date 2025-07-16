@@ -16,6 +16,8 @@ Practically, Sundance server combines the user's input with a GraphQL schema and
 TOKEN_VALIDATION_URL = "https://api.tel-aviv.gov.il/sso/validate_token"
 GRAPHQL_URL = xxx
 CLIENT_ID = xxx
+LOGIN_SCOPE=xxx
+LOGIN_DEVICE_ID=xxx
 GEMINI_API_KEY=xxx
 ANTHROPIC_API_KEY=xxx
 HF_KEY=xxx

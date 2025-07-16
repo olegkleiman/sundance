@@ -50,32 +50,26 @@
   <script>
 
     async function getAccessToken() {
-      
-      // TBD: get access token the local storage
-      const loginPayload = {
-        "phoneNumber": "0543307026",
-        "otp": "777",
-        "clientId": "993f503d-8081-4a84-b5b5-30b3e7f3c641",
-        "scope": "openid offline_access https://TlvfpB2CPPR.onmicrosoft.com/chat/access_all", 
-        "deviceId": "00155DBCA33D"
-      };
+    
+      const loginRequest = {
+        phoneNumber: "0543307026",
+        otp: "777"
+      }
 
-      const login_response = await fetch('https://apimtlvppr.tel-aviv.gov.il/sso/login', {
+      let loginResponse = await fetch('./login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(loginPayload)
-      });
-      if( !login_response.ok ) {
+        },        
+        body: JSON.stringify(loginRequest)
+      })
+      if( !loginResponse.ok ) {
         const loginBtn = document.getElementById('login-btn');
         loginBtn.textContent = "התחברות נכשלה";
       }
 
-      const loginData = await login_response.json();
-      const access_token = loginData.access_token;
-      console.log(access_token);
-      return access_token;
+      const loginData = await loginResponse.json();
+      return loginData.access_token;
     }
 
     function recogniztion_started() {
