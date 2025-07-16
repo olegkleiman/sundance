@@ -17,6 +17,7 @@
     "@genkit-ai/googleai": "^1.14.0",
     "@genkit-ai/vertexai": "^1.14.0",
     "@modelcontextprotocol/sdk": "^1.13.2",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^17.0.0",
     "express": "^5.1.0",
     "express-session": "^1.18.1",

@@ -15,6 +15,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 import { logger } from 'genkit/logging';
 import { jwtDecode } from "jwt-decode";
+import cookieParser from 'cookie-parser';
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -30,6 +31,7 @@ const app = express();
 app.use(express.static(path.join(__dirname, '../public')));
 app.use(express.json());
 app.use(cors());
+app.use(cookieParser());
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -40,6 +42,53 @@ app.use(session({
     cookie: { secure: isProduction }
 }))
 
+export async function authenticateToken(req: Request, res: Response, next: NextFunction): Promise<void> {
+
+    let access_token = req.cookies["access_token"];
+    if (!access_token) {
+        const headers = req.headers;
+        access_token = headers?.authorization?.split(' ')[1];
+    }
+    if (!access_token) {
+        throw new Error('Authorization token not found.');
+    }
+
+    const cached = tokenCache.get(access_token);
+    if (cached && Date.now() - cached.timestamp < TOKEN_CACHE_TTL) {
+        req.citizenId = cached.payload.citizenId;
+        return next();
+    }
+
+    const token_validation_url = process.env.TOKEN_VALIDATION_URL;
+    if (!token_validation_url) {
+        throw new Error('TOKEN_VALIDATION_URL is not defined in environment variables.');
+    }
+    const validationRequestBody = {
+        clientId: process.env.CLIENT_ID
+    }
+    const validation_resp = await fetch(token_validation_url, {
+        method: 'POST',
+        body: JSON.stringify(validationRequestBody),
+        headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + access_token
+        }
+    })
+    if( !validation_resp.ok ) {
+        const errorJson = await validation_resp.json();
+        tokenCache.delete(access_token); // Evict invalid token from cache
+        logger.error(errorJson);
+        throw new Error(errorJson.developerMessage);
+    }
+
+    const decodedJwt = jwtDecode(access_token);
+    tokenCache.set(access_token, { payload: decodedJwt, timestamp: Date.now() });
+    if( 'signInNames.citizenId' in decodedJwt )
+        req.citizenId = decodedJwt['signInNames.citizenId'];
+
+    next()
+};
+
 // Serve index.html at root
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../public', 'index.html'));
@@ -49,72 +98,18 @@ app.post('/init', authenticateToken, async (req, res) => {
     logger.debug('Session before /init:', req.sessionID, req.session);
 
     const userUtterance = req.body.data;
-    const promptTemplate = 'graphql_agent';
-
-    const prompt = ai.prompt(promptTemplate); // '.prompt' extension will be added automatically
-    const renderedPrompt = await prompt.render( 
-        { 
-            userInput: userUtterance,
-            toolList: toolDescriptions
-         } 
-    );
 
     req.session.userUtterance = userUtterance;
     logger.debug(`User utterance: ${JSON.stringify(req.session.userUtterance)}\n`);
-    req.session.access_token = req.access_token;
     req.session.citizenId = req.citizenId;
 
-    res.status(200).json({ message: 'Prompt received' });
+    res.status(200).json({ message: "User's utterance received" });
 });
 
 const tokenCache = new Map<string, { payload: any; timestamp: number }>();
 const TOKEN_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-export async function authenticateToken(req: Request, res: Response, next: NextFunction): Promise<void> {
-        const headers = req.headers;
-        const access_token = headers?.authorization?.split(' ')[1];
-        if (!access_token) {
-            throw new Error('Authorization token not found.');
-        }
 
-        const cached = tokenCache.get(access_token);
-        if (cached && Date.now() - cached.timestamp < TOKEN_CACHE_TTL) {
-            req.citizenId = cached.payload.citizenId;
-            return next();
-            return;
-        }
-
-        const token_validation_url = process.env.TOKEN_VALIDATION_URL;
-        if (!token_validation_url) {
-            throw new Error('TOKEN_VALIDATION_URL is not defined in environment variables.');
-        }
-        const validationRequestBody = {
-            clientId: process.env.CLIENT_ID
-        }
-        const validation_resp = await fetch(token_validation_url, {
-            method: 'POST',
-            body: JSON.stringify(validationRequestBody),
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + access_token
-            }
-        })
-        if( !validation_resp.ok ) {
-            const errorJson = await validation_resp.json();
-            tokenCache.delete(access_token); // Evict invalid token from cache
-            logger.error(errorJson);
-            throw new Error(errorJson.developerMessage);
-        }
-
-        req.access_token = access_token;
-
-        const decodedJwt = jwtDecode(access_token);
-        tokenCache.set(access_token, { payload: decodedJwt, timestamp: Date.now() });
-        if( 'signInNames.citizenId' in decodedJwt )
-            req.citizenId = decodedJwt['signInNames.citizenId'];
-
-        next()
-};
 
 app.get('/tools', async (req, res) => {
     return res.status(200).send(toolDefinitions);
@@ -183,15 +178,26 @@ app.post('/login', async (req, res) => {
     const phoneNumber = req.body.phoneNumber;
 
     const clientId = process.env.CLIENT_ID;
+    if( !clientId ) {
+        throw new Error('CLIENT_ID is not defined in environment variables.');
+    }
+
     const scope = process.env.LOGIN_SCOPE;
+    if( !scope ) {
+        throw new Error('LOGIN_SCOPE is not defined in environment variables.');
+    }
+
     const deviceId = process.env.LOGIN_DEVICE_ID;
+    if( !deviceId ) {
+        throw new Error('LOGIN_DEVICE_ID is not defined in environment variables.');
+    }
 
     const loginPayload = {
-        phoneNumber: phoneNumber,
-        otp: otp,
-        clientId: clientId,
-        scope: scope,
-        deviceId: deviceId
+        phoneNumber,
+        otp,
+        clientId,
+        scope,
+        deviceId
       };
 
       const loginUrl = process.env.LOGIN_URL;
@@ -211,6 +217,13 @@ app.post('/login', async (req, res) => {
       }
 
       const loginData = await login_response.json();
+      res.cookie('access_token', loginData.access_token, {
+        httpOnly: true,    // Not accessible from JS
+        secure: true,      // Only sent over HTTPS
+        // sameSite: 'Strict',// Prevent CSRF,
+        maxAge: 60 * 60 * 1000 // 1 hour
+      })
+
       return res.json({
         access_token: loginData.access_token
       })
@@ -218,6 +231,8 @@ app.post('/login', async (req, res) => {
 
 app.get('/chat', async (req, res) => { 
     
+    const access_token = req.cookies["access_token"];
+
     if( !req.session || !req.session.userUtterance ) {
         logger.warn(`SSE request from session (${req.sessionID}) without a prompt.`);
 
@@ -247,7 +262,7 @@ app.get('/chat', async (req, res) => {
         const stream = await sundanceFlow(userUtterance, {
             context: {
                 headers: req.headers,
-                access_token: req.session.access_token,
+                access_token: access_token,
                 citizenId: req.session.citizenId
             }
         });
