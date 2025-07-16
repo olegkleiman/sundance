@@ -32,7 +32,7 @@
       </button>
       <div class="state-container">
         <div id="state_lbl"></div>
-    </div>
+      </div>
       <div>
         <button id="stopBtn" class="stop-button" aria-label="Stop">
           <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
@@ -41,7 +41,8 @@
         </button>
       </div>
     </div>
-    </div>
+  </div>
+      </div>
     <div id="ticker-container">
       <div id="ticker">התשובות תופענה כאן</div>
     </div>
@@ -50,6 +51,7 @@
 
     async function getAccessToken() {
       
+      // TBD: get access token the local storage
       const loginPayload = {
         "phoneNumber": "0543307026",
         "otp": "777",
