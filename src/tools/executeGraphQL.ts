@@ -1,5 +1,6 @@
+
 // 
-// sundanceFlow.ts
+// executeGraphQL.ts
 // Sundance project
 //
 // Created by: Oleg Kleiman on 14/07/2025
@@ -8,24 +9,15 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import path from 'path'; 
-
-import { buildSchema, parse, validate, GraphQLError, GraphQLSchema } from 'graphql';
-import { ApolloClient, gql, HttpLink, InMemoryCache } from "@apollo/client/core/index.js"; // Import directly from core
-import * as fs from 'fs/promises';
-import { fileURLToPath } from 'url';
-
 import * as z from 'zod';
 import { logger } from 'genkit/logging';
-import { ai } from './genkit.js';
+import { ai } from '../genkit.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Load and build the GraphQL schema once at module startup.
-const schemaPath = path.resolve(__dirname, '../llm_prompts/schema.graphql');
-const schemaSDL = await fs.readFile(schemaPath, 'utf-8');
-const graphQLSchema: GraphQLSchema = buildSchema(schemaSDL);
+import { buildSchema, parse, validate, GraphQLError, GraphQLSchema } from 'graphql';
+import { ApolloClient, gql, HttpLink, InMemoryCache } from "@apollo/client/core/index.js";
+import * as fs from 'fs/promises';
+import { fileURLToPath } from 'url';
+import path from 'path'; 
 
 const graphql_endpoint = process.env.GRAPHQL_URL;
 
@@ -39,8 +31,16 @@ const apolloClient = new ApolloClient({
     cache: new InMemoryCache(),
 });
 
-const executeGraphQL = ai.defineTool({
-        name: "executedraphQL",
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load and build the GraphQL schema once at module startup.
+const schemaPath = path.resolve(__dirname, '../../llm_prompts/schema.graphql');
+const schemaSDL = await fs.readFile(schemaPath, 'utf-8');
+export const graphQLSchema: GraphQLSchema = buildSchema(schemaSDL);
+
+export const executeGraphQLTool = ai.defineTool({
+        name: "ExecuteraphQL",
         description: "Executes a GraphQL query to retrieve user data. Use this tool to answer any user question about their data.",
         inputSchema: z.object({
             query: z.string().describe("A valid GraphQL query."),
@@ -83,31 +83,3 @@ const executeGraphQL = ai.defineTool({
         }
     }   
 );
-
-export const sundanceFlow = ai.defineFlow(
-    {
-        name: "sundanceFlow",
-        inputSchema: z.string(),
-        outputSchema: z.any(),
-    },
-    async (userInput: string) => {
-
-        const prompt = ai.prompt("graphql_agent");
-        const rendered_prompt = await prompt.render(
-            {
-                schemaSDL: schemaSDL,
-                userInput: userInput                
-            }
-        );
-        logger.debug(rendered_prompt);
-
-        console.time('ai.generateStream');
-        const { stream } = ai.generateStream({
-            ...rendered_prompt,
-            tools: [executeGraphQL]
-        });
-        console.timeEnd('ai.generateStream');
-
-        return stream;
-    }
-)

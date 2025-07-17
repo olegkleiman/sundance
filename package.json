@@ -17,13 +17,18 @@
     "@genkit-ai/googleai": "^1.14.0",
     "@genkit-ai/vertexai": "^1.14.0",
     "@modelcontextprotocol/sdk": "^1.13.2",
+    "@qdrant/js-client-rest": "^1.14.1",
+    "@xenova/transformers": "^2.17.2",
+    "cheerio": "^1.1.0",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.0.0",
     "express": "^5.1.0",
     "express-session": "^1.18.1",
+    "fast-xml-parser": "^5.2.5",
     "genkitx-anthropic": "^0.23.1",
     "graphql": "^16.11.0",
     "jwt-decode": "^4.0.0",
+    "llm-chunk": "^0.0.1",
     "zod": "^3.25.67"
   },
   "devDependencies": {

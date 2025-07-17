@@ -24,7 +24,9 @@ import { ai } from './genkit.js' //'./genkit.ts';
 import { ToolsFlow } from './tools_flow.js';
 import { anthropicFlow } from './anthropicFlow.js';
 import { toolDefinitions, toolDescriptions } from './mcpClient.js';
-import { sundanceFlow } from './sundanceFlow.js';
+import { SearchFlow } from './flows/searchFlow.js';
+import { SundanceFlow } from './flows/sundanceFlow.js';
+import { IndexFlow } from './flows/indexerFlow.js';
 
 const app = express();
 
@@ -109,7 +111,16 @@ app.post('/init', authenticateToken, async (req, res) => {
 const tokenCache = new Map<string, { payload: any; timestamp: number }>();
 const TOKEN_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
+app.post('/indexer', async (req, res) => {
 
+    const url = req.body.url;
+    if( !url ) {
+        throw new Error('URL is not defined in request body.');
+    }
+    await IndexFlow(url);
+    
+    return res.status(202).send();
+})
 
 app.get('/tools', async (req, res) => {
     return res.status(200).send(toolDefinitions);
@@ -259,11 +270,15 @@ app.get('/chat', async (req, res) => {
     try {
         const userUtterance = req.session.userUtterance;
 
-        const stream = await sundanceFlow(userUtterance, {
+        // Run SearchFlow - RAG step
+        const docs = await SearchFlow(userUtterance);
+
+        const stream = await SundanceFlow(userUtterance, {
             context: {
                 headers: req.headers,
                 access_token: access_token,
-                citizenId: req.session.citizenId
+                citizenId: req.session.citizenId,
+                docs: docs
             }
         });
 
