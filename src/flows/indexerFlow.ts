@@ -11,7 +11,8 @@ import {  CLIPTokenizer,
     RawImage, 
     cos_sim, 
     cat} from '@xenova/transformers';
-import { QdrantClient } from '@qdrant/js-client-rest';
+// import { QdrantClient } from '@qdrant/js-client-rest';
+import { CosmosClient } from '@azure/cosmos';
 import { randomUUID } from "node:crypto";
 
 const chunkingConfig = {
@@ -44,15 +45,12 @@ function sleep(ms: number) {
 
 const EMBEDDING_VECTOR_SIZE = 512;
 
-const qdrant_url = process.env.QDRANT_URL;
-const qdrant_client = new QdrantClient({
-    url: qdrant_url
+const cosmos_client = new CosmosClient({ 
+    endpoint: process.env.COSMOS_CLIENT_URL,
+    key: process.env.COSMOS_CLIENT_KEY
 });
-
-const collection_name = process.env.QDRANT_COLLECTION_NAME;
-if( !collection_name ) {
-    throw new Error('QDRANT_COLLECTION_NAME is not defined in environment variables');
-}
+const cosmosDatabase = cosmos_client.database('danceR');
+const container = cosmosDatabase.container('TextUnits');
 
 // Use CLIP as multimodal embedding model.
 // Refer to this article for more information: https://www.tigerdata.com/blog/how-to-build-an-image-search-application-with-openai-clip-postgresql-in-javascript
@@ -80,24 +78,6 @@ export const IndexFlow = ai.defineFlow({
 },
 async (contentMapUrl: string) => {
 
-    let collection_info: any = {}
-
-    try {
-        // getCollection() does not return errors - it's throws exception
-        collection_info = await qdrant_client.getCollection(collection_name);
-    } catch (error) {
-        logger.info(`Collection ${collection_name} does not exist. Creating...`);
-
-        await qdrant_client.createCollection(collection_name, {
-            vectors: {
-                size: EMBEDDING_VECTOR_SIZE,
-                distance: 'Cosine'
-            }
-        });
-
-        collection_info = await qdrant_client.getCollection(collection_name);
-    }
-
     const content = await fetch(contentMapUrl);
     const xmlContent = await content.text();
 
@@ -105,7 +85,7 @@ async (contentMapUrl: string) => {
     const json = parser.parse(xmlContent);
 
     let index = 0;
-    const siteDocs = await Promise.all(
+    await Promise.all(
         json.urlset.url.map( async (url: any) => {
 
             if( url.loc.includes("/ar") ||
@@ -132,51 +112,29 @@ async (contentMapUrl: string) => {
                 });
 
                 const pageText = $('body').text().replace(/<!\[CDATA\[.*?/gs, '').trim();
-                console.debug(pageText);
 
                 const $$ = cheerio.load(pageText);
                 const bodyText = $$.text().replace(/\s+/g, ' ').trim();
-                logger.debug(bodyText)
 
                 const chunks = chunk(bodyText, chunkingConfig);
-                logger.debug(chunks);
 
-                const points = [];
-                
                 for( const chunk of chunks) {
                     const queryEmbedding = await embedText(chunk);
 
-                    points.push({
+                    const item = {
                         id: randomUUID(),
                         vector: queryEmbedding,
                         payload: {
                             url: url.loc,
                             text: chunk
                         }
-                    })
-                }
-                logger.debug(points);
+                    }
 
-                try {
-                    const batch = {
-                          ids: points.map(item => item.id),
-                          vectors: points.map(item => item.vector),
-                          payloads: points.map(item => item.payload),
-                        // optionally add wait/ordering here
-                      };
+                    const cosmosItem = await container.items.upsert(item);
+                    logger.debug(cosmosItem);
 
-                    await qdrant_client.upsert(collection_name, {
-                        wait: true,
-                        batch: batch
-                    });
-                } catch (error) {
-                    logger.error(`Error upserting data to collection ${collection_name}:`, error);
                 }
-             
-                // return {
-                //     url: url.loc,
-                //     text: bodyText
-                // }
+
             } catch (error: any) {
                 logger.error(`Failed to fetch ${url.loc}:`, error);
                 return null;
@@ -184,5 +142,5 @@ async (contentMapUrl: string) => {
         })
     );
 
-    return docs.filter(Boolean);;
+    return;
 })

@@ -13,6 +13,7 @@
   "description": "",
   "dependencies": {
     "@apollo/client": "^3.13.8",
+    "@azure/cosmos": "^4.4.1",
     "@genkit-ai/dev-local-vectorstore": "^1.14.0",
     "@genkit-ai/googleai": "^1.14.0",
     "@genkit-ai/vertexai": "^1.14.0",
