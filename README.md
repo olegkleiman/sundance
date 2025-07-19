@@ -24,7 +24,6 @@ ANTHROPIC_API_KEY=xxx
 HF_KEY=xxx
 SITE_MAP_URL=https://www.tel-aviv.gov.il/sitemap.xml
 COSMOS_CLIENT_URL=https://sundance.documents.azure.com:443/
-COSMOS_CLIENT_KEY=<xxx>
 COSMOS_DATABASE_NAME=<xxx>
 COSMOS_CONTAINER_NAME=<xxx>
 TOP_N=3
