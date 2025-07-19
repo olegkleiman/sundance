@@ -27,6 +27,7 @@ import { toolDefinitions, toolDescriptions } from './mcpClient.js';
 import { SearchFlow } from './flows/searchFlow.js';
 import { SundanceFlow } from './flows/sundanceFlow.js';
 import { IndexFlow } from './flows/indexerFlow.js';
+import { hybridRetriever } from './retrievers/hybridRetriever.js';
 
 const app = express();
 
@@ -126,63 +127,6 @@ app.get('/tools', async (req, res) => {
     return res.status(200).send(toolDefinitions);
 })
 
-app.get('/chat_events', async (req, res) => {
-    
-    if( !req.session || !req.session.prompt ) {
-        logger.warn(`SSE request from session (${req.sessionID}) without a prompt.`);
-
-        res.flushHeaders(); // Send headers before writing event
-        res.write('event: error\ndata: {"message": "Chat not initialized. Please set a prompt first via /init."}\n\n');
-        res.end();
-
-        return;        
-    }
-
-    logger.info(`Prompt received from session: ${req.session.prompt}`);
-
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.flushHeaders(); // send headers
-
-    const closeConnection = () => {
-        if (!res.writableEnded) {
-            res.end();
-            logger.debug(`SSE connection closed for session ${req.sessionID}`);
-        }
-    };
-    req.on('close', closeConnection);
-
-    try {
-
-        const userUtterance = req.session.userUtterance;
-
-        const stream = await ToolsFlow(userUtterance
-                                    // {
-                                    //     context: 
-                                    //     {
-                                    //         headers,
-                                    //         access_token,
-                                    //         citizenId
-                                    //     }
-                                    // }
-                                );
-        for await (const chunk of stream) {
-            const textContent = chunk.text || '';
-            logger.debug(textContent);
-
-            res.write(`event:message\ndata: ${textContent}\n\n`);
-        }
-
-    } catch (error: any) {
-        logger.error(error)
-        res.write(`event: error\ndata: ${error.message}\n\n`);
-
-    } finally {
-        closeConnection();
-    }
-});
-
 app.post('/login', async (req, res) => {
     
     const otp = req.body.otp;
@@ -270,8 +214,16 @@ app.get('/complete', async (req, res) => {
     try {
         const userUtterance = req.session.userUtterance;
 
-        // Run SearchFlow - RAG step
-        const docs = await SearchFlow(userUtterance);
+        // RAG step
+        const docs = await ai.retrieve({
+            retriever: hybridRetriever, //use the custom retriever
+            query: userUtterance,
+            options: {
+                k: 3,
+                preRerankK: 10,
+                customFilter: "words count > 5",
+            }
+        });        
 
         const stream = await SundanceFlow(userUtterance, {
             context: {

@@ -8,6 +8,9 @@
 //
 // Created by: Oleg Kleiman on 18/07/2025
 // 
+
+import * as fs from 'fs/promises';
+import { fileURLToPath } from 'url';
 import * as z from 'zod';
 import { logger } from 'genkit/logging';
 import { ai } from '../genkit.js';
@@ -23,6 +26,16 @@ import {  CLIPTokenizer,
     cat} from '@xenova/transformers';
 // import { QdrantClient } from '@qdrant/js-client-rest';
 import { CosmosClient } from '@azure/cosmos';
+import {
+    ContainerDefinition,
+    PartitionKeyDefinition,
+    PartitionKeyKind,
+    IndexingMode,
+    VectorEmbeddingPolicy,
+    VectorEmbeddingDataType,
+    VectorEmbeddingDistanceFunction,
+    VectorIndex,
+} from '@azure/cosmos';
 import { randomUUID } from "node:crypto";
 
 const chunkingConfig = {
@@ -44,50 +57,50 @@ export const cosmos_client = new CosmosClient({
     key: process.env.COSMOS_CLIENT_KEY
 });
 
-const cosmosDatabaseName = process.env.COSMOS_DATABASE_NAME;
-if( !cosmosDatabaseName ) {
-    throw new Error('COSMOS_DATABASE_NAME is not defined in environment variables.');
+const cosmosDatabaseId = process.env.COSMOS_DATABASE_ID;
+if( !cosmosDatabaseId ) {
+    throw new Error('COSMOS_DATABASE_ID is not defined in environment variables.');
 }
 
-const cosmosContainerName = process.env.COSMOS_CONTAINER_NAME;
-if( !cosmosContainerName ) {
-    throw new Error('COSMOS_CONTAINER_NAME is not defined in environment variables.');
+const cosmosContainerId = process.env.COSMOS_CONTAINER_ID;
+if( !cosmosContainerId ) {
+    throw new Error('COSMOS_CONTAINER_ID is not defined in environment variables.');
 }
 
-const cosmosDatabase = cosmos_client.database(cosmosDatabaseName);
-export const cosmosContainer = cosmosDatabase.container(cosmosContainerName);
+// const cosmosDatabase = cosmos_client.database(cosmosDatabaseId);
+export const cosmosContainer = await createVectorContainer();
 
-// Indexing policy with vector indexes
-// const indexingPolicy = {
-//     indexingMode: "consistent",
-//     includedPaths: [
-//       { path: "/*" }
-//     ],
-//     vectorIndexes: [
-//       { path: "/embedding", type: "diskANN" },
-//     ]
-//   };
+async function createVectorContainer() {
+    // Ensure the database exists
+    const { database } = await cosmos_client.databases.createIfNotExists({ id: cosmosDatabaseId });
+  
+    // Create the container with vector index
+    const { container } = await database.containers.createIfNotExists({
+      id: cosmosContainerId,
+      partitionKey: {
+        paths: ['/TenantId'],
+        kind: PartitionKeyKind.Hash,
+      },
+      indexingPolicy: {
+        indexingMode: IndexingMode.consistent,
+        automatic: true
+      },
+      vectorEmbeddingPolicy: {
+        vectorEmbeddings: [
+            {
+                path: '/embedding',
+                dataType: VectorEmbeddingDataType.Float32,
+                distanceFunction: VectorEmbeddingDistanceFunction.Cosine,
+                dimensions: EMBEDDING_VECTOR_SIZE
+            }
+        ]
+    }
+    });
+  
+    logger.debug(`Vector container '${cosmosContainerId}' is ready`);
+    return container;
+  }
 
-
-// const vectorEmbeddingPolicy: VectorEmbeddingPolicy = {
-//     vectorEmbeddings: [
-//       {
-//         path: "/embedding",
-//         dimensions: EMBEDDING_VECTOR_SIZE,
-//         dataType: "float32",
-//         distanceFunction: "cosine"
-//       }
-//     ]
-//   }
-
-// export const { container: cosmosContainer } = await cosmosDatabase.containers.createIfNotExists({
-//     id: cosmosContainerName,
-//     partitionKey: {
-//         paths: ['/TenantId']
-//     },
-//     vectorEmbeddingPolicy,
-//     // indexingPolicy
-// });
 
 // Use CLIP as multimodal embedding model.
 // Refer to this article for more information: https://www.tigerdata.com/blog/how-to-build-an-image-search-application-with-openai-clip-postgresql-in-javascript
@@ -116,12 +129,26 @@ export async function embedText(text: string): Promise<number[]> {
 
 export const IndexFlow = ai.defineFlow({
     name: "indexFlow",
-    inputSchema: z.string().describe("sitemap file path"),
+    inputSchema: z.string().describe("sitemap file path or URL"),
 },
 async (contentMapUrl: string) => {
 
-    const content = await fetch(contentMapUrl);
-    const xmlContent = await content.text();
+    let xmlContent: string = "";
+
+    try {
+        const url = new URL(contentMapUrl);
+        if (url.protocol === 'file:') {
+            const filePath = fileURLToPath(contentMapUrl);
+            xmlContent = await fs.readFile(filePath, 'utf8');
+        } 
+        else {
+            const content = await fetch(contentMapUrl);
+            xmlContent = await content.text();
+        }
+    } catch (error) {
+        console.error(`Error processing URL:`, error);
+        throw error;
+    }
 
     const parser = new XMLParser();
     const json = parser.parse(xmlContent);

@@ -28,8 +28,8 @@ HF_KEY=xxx
 SITE_MAP_URL=https://www.tel-aviv.gov.il/sitemap.xml
 COSMOS_CLIENT_URL=https://sundance.documents.azure.com:443/
 COSMOS_CLIENT_KEY=<xxx>
-COSMOS_DATABASE_NAME=<xxx>
-COSMOS_CONTAINER_NAME=<xxx>
+COSMOS_DATABASE_ID=<xxx>
+COSMOS_CONTAINER_ID=<xxx>
 TOP_N=3
 ```
 2. Run `npm install` to install dependencies
@@ -42,14 +42,18 @@ Front-end HTML page (index.html) is available once the node app is running.
 When running for the first time, the page requests the permissions to use microphone, camera, and geolocation on the user's device. 
 
 ### How to use
-1. Ensure that Azure Cosmos DB is running and accessible. Development configuration assumes the container 'danceR' and the database 'TextUnits'.
-#### Configure Cosmos DB for vector search
+1. Ensure that Azure Cosmos DB account is exists.
+Its connection string is defined in the .env file by two variables: 
+```
+COSMOS_CLIENT_URL=<xxx>
+COSMOS_CLIENT_KEY=<xxx>
+```
+2. Start the server by running `npm run start`.
+3. Invoke the indexer endpoint by issuing a POST request to `/indexer` endpoint
 
-1. Create a Cosmos DB account with Azure Cosmos DB for NoSQL.
-2. Create a database and a container.
-3. Enable vector search on the container: In Azure Portal
+This creates the Azure Cosmos database, and container. Development configuration assumes the container 'danceR' and the database 'chunks'.
+After successful execution the container looks as follows in Azure Portal:
 ![alt text](image.png)
-
 
 1a. Alternatively you can use QDrant Run QDrant server on local on Azure-based Docker container.
 ```
