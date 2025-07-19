@@ -2,9 +2,11 @@
 This is both client and server sides of the chatbox.
 
 The client is SPA built with native JS for browser. (currently even no React is used)
-The server part is built with Node.js and Express.js.
+The server part is built with Node.js and Express.js. 
 
-Sundance is used as a wrapper for GraphQL Server exposed to LLM via the 'universal' tool. 
+It uses CLIP model to generate embeddings for text and images and [Gemini 2.5 Pro](https://cloud.google.com/vertex-ai/generative-ai/docs/models/gemini/2-5-pro) model as LLM. To observe the seurity issues of Gemini 2.5 Pro model, see [here](https://storage.googleapis.com/model-cards/documents/gemini-2.5-pro.pdf).
+
+The server side of Sundance is used as a wrapper for GraphQL Server exposed to LLM via the universal' tool. 
 It depends on the LLM's ability to use the 'function calling' feature.
 
 Practically, Sundance server combines the user's input with a GraphQL schema and asks the LLM tool (executeGraphQL) with a query generated for the specific user's input. The shape of the response is actually defined by the GraphQL schema provided in the prompt. After the tool is called, it tries to execute the query against the configured GraphQL server (via the GRAPHQL_URL environment variable defined in the .env file).
