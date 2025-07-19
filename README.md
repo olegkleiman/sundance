@@ -10,26 +10,7 @@ It depends on the LLM's ability to use the 'function calling' feature.
 Practically, Sundance server combines the user's input with a GraphQL schema and asks the LLM tool (executeGraphQL) with a query generated for the specific user's input. The shape of the response is actually defined by the GraphQL schema provided in the prompt. After the tool is called, it tries to execute the query against the configured GraphQL server (via the GRAPHQL_URL environment variable defined in the .env file).
 
 ### How to build
-1. Re-create .env according to the following template: (Or [authenticate](https://onedrive.live.com/?id=f7fcac94e18e43af8ed195c15f222c9b&cid=AAB8403F89EC60E6) to give the working file)
-
-```
-LOGIN_URL = https://api.tel-aviv.gov.il/sso/login
-TOKEN_VALIDATION_URL = https://api.tel-aviv.gov.il/sso/validate_token
-GRAPHQL_URL=<xxx>
-CLIENT_ID=<xxx>
-LOGIN_SCOPE=xxx
-LOGIN_DEVICE_ID=xxx
-GEMINI_API_KEY=xxx
-ANTHROPIC_API_KEY=xxx
-HF_KEY=xxx
-SITE_MAP_URL=https://www.tel-aviv.gov.il/sitemap.xml
-COSMOS_CLIENT_URL=https://sundance.documents.azure.com:443/
-COSMOS_CLIENT_KEY=<xxx>
-COSMOS_DATABASE_NAME=<xxx>
-COSMOS_CONTAINER_NAME=<xxx>
-TOP_N=3
-```
-
+1. Re-create .env file by [authenticate](https://onedrive.live.com/?id=f7fcac94e18e43af8ed195c15f222c9b&cid=AAB8403F89EC60E6) to give the working file)
 2. Run `npm install` to install dependencies
 3. Run `npm run build` to build the project
 4. Run `npm run start` to start the server 
