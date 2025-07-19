@@ -98,8 +98,8 @@ const tokenizer = await CLIPTokenizer.from_pretrained(model_id);
 const text_model = await CLIPTextModelWithProjection.from_pretrained(model_id, { quantized: true });
 const MAX_TOKENS = 77;
 
-// Returns standard JavaScript number array instead of Float32Array that by the defaukt returned from CLIP Model
-// This is because Cosmos DB used as vector DB stores the enbeddigs as plain JS Array.
+// Returns standard JavaScript number array instead of Float32Array that by the default returned from CLIP Model
+// This is because Cosmos DB used as vector DB, stores the enbeddings as plain JS Array.
 // See VectorDistance documentation for more information: https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/query/vectordistance
 export async function embedText(text: string): Promise<number[]> {
     try {

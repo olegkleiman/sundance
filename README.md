@@ -1,18 +1,20 @@
 # Sundance - plugable AI chatbox
-This is both client and server sides of the chatbox.
+This is both client and server sides of the AI chatbox.
 
 The client is SPA built with native JS for browser. (currently even no React is used)
 The server part is built with Node.js and Express.js. 
 
-It uses CLIP model to generate embeddings for text and images and [Gemini 2.5 Pro](https://cloud.google.com/vertex-ai/generative-ai/docs/models/gemini/2-5-pro) model as LLM. To observe the seurity issues of Gemini 2.5 Pro model, see [here](https://storage.googleapis.com/model-cards/documents/gemini-2.5-pro.pdf).
+It uses [Xenona adaptation](https://huggingface.co/Xenova/clip-vit-base-patch32) of the original OpenAI CLIP model to generate embeddings for text and images and [Gemini 2.5 Pro](https://cloud.google.com/vertex-ai/generative-ai/docs/models/gemini/2-5-pro) model as LLM. To observe the privacy landscape of Gemini 2.5 Pro model, see [here](https://cloud.google.com/gemini/docs/discover/data-governance). In short (from the referenced doc): 
+Gemini doesn't use your prompts or its responses as data to train its models.
+![alt text](image-1.png)
 
-The server side of Sundance is used as a wrapper for GraphQL Server exposed to LLM via the universal' tool. 
+The server side of **Sundance** is used as a wrapper for GraphQL Server exposed to LLM via the universal' tool. 
 It depends on the LLM's ability to use the 'function calling' feature.
 
-Practically, Sundance server combines the user's input with a GraphQL schema and asks the LLM tool (executeGraphQL) with a query generated for the specific user's input. The shape of the response is actually defined by the GraphQL schema provided in the prompt. After the tool is called, it tries to execute the query against the configured GraphQL server (via the GRAPHQL_URL environment variable defined in the .env file).
+Practically **Sundance** server combines the user's input with a GraphQL schema and asks the LLM tool (*executeGraphQL* function) with a query generated for the specific user's input. The shape of the response is actually defined by the GraphQL schema provided in the prompt. After the tool is called, it tries to execute the query against the configured GraphQL server (via the GRAPHQL_URL environment variable defined in the .env file).
 
 ### How to build
-1. Re-create .env file by [authenticate](https://onedrive.live.com/?id=f7fcac94e18e43af8ed195c15f222c9b&cid=AAB8403F89EC60E6) to give the working file)
+1. Re-create .env file by [authenticate](https://onedrive.live.com/?id=f7fcac94e18e43af8ed195c15f222c9b&cid=AAB8403F89EC60E6) to give the working file.
 ```
 LOGIN_URL = https://api.tel-aviv.gov.il/sso/login
 TOKEN_VALIDATION_URL = https://api.tel-aviv.gov.il/sso/validate_token

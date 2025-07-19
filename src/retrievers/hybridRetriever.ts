@@ -14,9 +14,8 @@ import {
 import * as z from 'zod';
 import { logger } from 'genkit/logging';
 import { Document, CommonRetrieverOptionsSchema } from 'genkit/retriever';
-
-const pdfIndexer = devLocalIndexerRef('sundanceLocalIndex')  
-const devLocalRetriever = devLocalRetrieverRef('sundanceLocalIndex')
+import { cosmosContainer, embedText, EMBEDDING_VECTOR_SIZE } from '../flows/indexerFlow.js';
+import { text } from 'express';
 
 const hybridRetrieverOptionsSchema = CommonRetrieverOptionsSchema.extend({
     // 'k' is already in CommonRetrieverOptionsSchema, but you could add others:
@@ -36,6 +35,20 @@ export const hybridRetriever = ai.defineRetriever(
         const initialK = options.preRerankK || 10; // Default to 10 if not provided
         const finalK = options.k ?? 3; // Default final number of docs to 3 if k is not set
 
+        const embeddingArray = await embedText(query.text);
+        const topN = process.env.SEARCH_TOP_N || 10;    // default to 10
+        const querySpec = {
+            query: `
+                SELECT TOP ${topN}
+                c.payload,
+                VectorDistance(c.embedding, [${embeddingArray.join(',')}]) AS score
+                FROM c
+                ORDER BY VectorDistance(c.embedding, [${embeddingArray.join(',')}])          
+          `
+        };
+        const { resources } = await cosmosContainer.items.query(querySpec).fetchAll();
+
+
         // --- Merge & Deduplicate Results ---
         // Use a Map to store unique documents by content hash
         // Assign scores from both retrieval methods.        
@@ -47,7 +60,12 @@ export const hybridRetriever = ai.defineRetriever(
            }>();
 
         return {
-            documents: []
+            documents: resources.map((doc) => ({
+                content: [
+                { text: doc.payload.text }
+                ],
+                metadata: doc,
+            }))
         }
     }
 );

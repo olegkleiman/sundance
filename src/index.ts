@@ -240,7 +240,7 @@ app.post('/login', async (req, res) => {
       })
 })
 
-app.get('/chat', async (req, res) => { 
+app.get('/complete', async (req, res) => { 
     
     const access_token = req.cookies["access_token"];
 
