@@ -1,3 +1,13 @@
+// indexerFlow.ts
+// Sundance project
+
+// Ingest documents from a sitemap: 
+// 1. fetch the documents listed in sitemap 
+// 2. chunk and embed them them into Azure Cosmos DB
+
+//
+// Created by: Oleg Kleiman on 18/07/2025
+// 
 import * as z from 'zod';
 import { logger } from 'genkit/logging';
 import { ai } from '../genkit.js';
@@ -23,34 +33,61 @@ const chunkingConfig = {
     delimiters: '', // regex for base split method
   } as any;
 
-  class DbStorePoint {
-    url: string;
-    text: string;
-  
-    constructor(url: string, text: string) {
-      this.url = url;
-      this.text = text;
-    }
-  
-    display(): void {
-      logger.debug(`Text: ${this.text}, URL: ${this.url}`);
-    }
-  }
-
-const docs: DbStorePoint[] = [];
-
 function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-const EMBEDDING_VECTOR_SIZE = 512;
+export const EMBEDDING_VECTOR_SIZE = 512;
 
-const cosmos_client = new CosmosClient({ 
+export const cosmos_client = new CosmosClient({ 
     endpoint: process.env.COSMOS_CLIENT_URL,
     key: process.env.COSMOS_CLIENT_KEY
 });
-const cosmosDatabase = cosmos_client.database('danceR');
-const container = cosmosDatabase.container('TextUnits');
+
+const cosmosDatabaseName = process.env.COSMOS_DATABASE_NAME;
+if( !cosmosDatabaseName ) {
+    throw new Error('COSMOS_DATABASE_NAME is not defined in environment variables.');
+}
+
+const cosmosContainerName = process.env.COSMOS_CONTAINER_NAME;
+if( !cosmosContainerName ) {
+    throw new Error('COSMOS_CONTAINER_NAME is not defined in environment variables.');
+}
+
+const cosmosDatabase = cosmos_client.database(cosmosDatabaseName);
+export const cosmosContainer = cosmosDatabase.container(cosmosContainerName);
+
+// Indexing policy with vector indexes
+// const indexingPolicy = {
+//     indexingMode: "consistent",
+//     includedPaths: [
+//       { path: "/*" }
+//     ],
+//     vectorIndexes: [
+//       { path: "/embedding", type: "diskANN" },
+//     ]
+//   };
+
+
+// const vectorEmbeddingPolicy: VectorEmbeddingPolicy = {
+//     vectorEmbeddings: [
+//       {
+//         path: "/embedding",
+//         dimensions: EMBEDDING_VECTOR_SIZE,
+//         dataType: "float32",
+//         distanceFunction: "cosine"
+//       }
+//     ]
+//   }
+
+// export const { container: cosmosContainer } = await cosmosDatabase.containers.createIfNotExists({
+//     id: cosmosContainerName,
+//     partitionKey: {
+//         paths: ['/TenantId']
+//     },
+//     vectorEmbeddingPolicy,
+//     // indexingPolicy
+// });
 
 // Use CLIP as multimodal embedding model.
 // Refer to this article for more information: https://www.tigerdata.com/blog/how-to-build-an-image-search-application-with-openai-clip-postgresql-in-javascript
@@ -61,11 +98,16 @@ const tokenizer = await CLIPTokenizer.from_pretrained(model_id);
 const text_model = await CLIPTextModelWithProjection.from_pretrained(model_id, { quantized: true });
 const MAX_TOKENS = 77;
 
-async function embedText(text: string): Promise<number[]> {
+// Returns standard JavaScript number array instead of Float32Array that by the defaukt returned from CLIP Model
+// This is because Cosmos DB used as vector DB stores the enbeddigs as plain JS Array.
+// See VectorDistance documentation for more information: https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/query/vectordistance
+export async function embedText(text: string): Promise<number[]> {
     try {
         const text_inputs = tokenizer(text, { padding: true, truncation: true, max_length: MAX_TOKENS });
         const { text_embeds } = await text_model(text_inputs);
-        return text_embeds.data;
+
+        // Convert TypedArray to a standard JavaScript number array for proper JSON serialization.
+        return Array.from(text_embeds.data);
     } catch (error) {
         console.error(`Error processing text:`, error);
         throw error;
@@ -92,18 +134,19 @@ async (contentMapUrl: string) => {
                 url.loc.includes("/en") )
                 return;
 
-            console.log(`${++index}: ${url.loc}`);
+            logger.debug(`${++index}: ${url.loc}`);
 
             try {
                 await sleep(300);
 
                 const content = await fetch(url.loc);
-                if (!content.ok) {
+                if( !content.ok) {
                     throw new Error(`Failed to fetch ${url.loc}`);
                 }
-                const contentText = await content.text(); // just convert to string
+                const contentText = await content.text(); // convert page content to string
  
-                const $ = cheerio.load(contentText);
+                const $ = cheerio.load(contentText); // From this poin on, manipulate the page content using cheerio
+                // Manipulation primarly means adaption the HTML to be more amenable to text extraction
                 $('script, style, iframe, noscript, svg, link, meta, object, embed, head, xml').remove();
 
                 $('body').contents().each(function () {
@@ -113,8 +156,7 @@ async (contentMapUrl: string) => {
 
                 const pageText = $('body').text().replace(/<!\[CDATA\[.*?/gs, '').trim();
 
-                const $$ = cheerio.load(pageText);
-                const bodyText = $$.text().replace(/\s+/g, ' ').trim();
+                const bodyText = pageText.replace(/\s+/g, ' ').trim();
 
                 const chunks = chunk(bodyText, chunkingConfig);
 
@@ -123,14 +165,15 @@ async (contentMapUrl: string) => {
 
                     const item = {
                         id: randomUUID(),
-                        vector: queryEmbedding,
+                        embedding: queryEmbedding,
+                        TenantId: "aa640f10-95f8-4f05-96f1-529dbbc11897",
                         payload: {
                             url: url.loc,
                             text: chunk
                         }
                     }
 
-                    const cosmosItem = await container.items.upsert(item);
+                    const cosmosItem = await cosmosContainer.items.upsert(item);
                     logger.debug(cosmosItem);
 
                 }

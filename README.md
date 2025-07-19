@@ -10,13 +10,13 @@ It depends on the LLM's ability to use the 'function calling' feature.
 Practically, Sundance server combines the user's input with a GraphQL schema and asks the LLM tool (executeGraphQL) with a query generated for the specific user's input. The shape of the response is actually defined by the GraphQL schema provided in the prompt. After the tool is called, it tries to execute the query against the configured GraphQL server (via the GRAPHQL_URL environment variable defined in the .env file).
 
 ### How to build
-1. Re-create .env according to the following template:
+1. Re-create .env according to the following template: (Or [authenticate](https://onedrive.live.com/?id=f7fcac94e18e43af8ed195c15f222c9b&cid=AAB8403F89EC60E6) to give the working file)
 
 ```
-LOGIN_URL = "https://api.tel-aviv.gov.il/sso/login"
-TOKEN_VALIDATION_URL = "https://api.tel-aviv.gov.il/sso/validate_token"
-GRAPHQL_URL = xxx
-CLIENT_ID = xxx
+LOGIN_URL = https://api.tel-aviv.gov.il/sso/login
+TOKEN_VALIDATION_URL = https://api.tel-aviv.gov.il/sso/validate_token
+GRAPHQL_URL =xxx
+CLIENT_ID =xxx
 LOGIN_SCOPE=xxx
 LOGIN_DEVICE_ID=xxx
 GEMINI_API_KEY=xxx
@@ -24,7 +24,10 @@ ANTHROPIC_API_KEY=xxx
 HF_KEY=xxx
 SITE_MAP_URL=https://www.tel-aviv.gov.il/sitemap.xml
 COSMOS_CLIENT_URL=https://sundance.documents.azure.com:443/
-COSMOS_CLIENT_KEY=gNqR1iVeZtkEKguZB2DHuEMU5pCHy7aKRE1iCNniVThxAojNgcMjFaq0BIphAmTf1MBN6nJ9OuD9ACDbrfdjpQ==
+COSMOS_CLIENT_KEY=xxx
+COSMOS_DATABASE_NAME=danceN
+COSMOS_CONTAINER_NAME=textItems
+TOP_N=3
 ```
 
 2. Run `npm install` to install dependencies
@@ -37,13 +40,22 @@ Front-end HTML page (index.html) is available once the node app is running.
 When running for the first time, the page requests the permissions to use microphone, camera, and geolocation on the user's device. 
 
 ### How to use
-1. Dun QDrant server. Use Docker for local run:
+1. Ensure that Azure Cosmos DB is running and accessible. Development configuration assumes the container 'danceR' and the database 'TextUnits'.
+#### Configure Cosmos DB for vector search
+
+1. Create a Cosmos DB account with Azure Cosmos DB for NoSQL.
+2. Create a database and a container.
+3. Enable vector search on the container: In Azure Portal
+![alt text](image.png)
+
+
+1a. Alternatively you can use QDrant Run QDrant server on local on Azure-based Docker container.
 ```
 docker run -p 6333:6333 -p 6334:6334 \
     -v "$(pwd)/qdrant_storage:/qdrant/storage:z" \
     qdrant/qdrant
 ```
-After that the QDrant dashboard Web UI is accesible by
+If run locally, the QDrant dashboard Web UI is accesible by
 ```
 http://localhost:6333/dashboard
 ```

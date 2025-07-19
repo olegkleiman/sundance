@@ -288,9 +288,10 @@ app.get('/chat', async (req, res) => {
 
             res.write(`event:message\ndata: ${textContent}\n\n`);
         }
-    } catch (error: any) {
-        logger.error(error)
-        res.write(`event: error\ndata: ${error.message}\n\n`);
+    } catch (err: any) {
+        logger.error(err)
+        res.write(`event: error\n`);
+        res.write(`data: ${JSON.stringify({ message: err.message })}\n\n`);
     } finally {
         closeConnection();
     }
@@ -311,4 +312,4 @@ app.get('/anthropicFlow', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 8099;
-app.listen(PORT, () => logger.info(`Sundance Server listening on http://localhost:${PORT}`) )
+app.listen(PORT, () => console.info(`Sundance Server listening on http://localhost:${PORT}`) )
