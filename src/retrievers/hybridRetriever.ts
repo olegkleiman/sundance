@@ -6,16 +6,14 @@
 // 
 
 import { ai } from '../genkit.js';
-import { 
-    devLocalIndexerRef, 
-    devLocalRetrieverRef,
-    devLocalVectorstore
- } from '@genkit-ai/dev-local-vectorstore';
 import * as z from 'zod';
 import { logger } from 'genkit/logging';
 import { Document, CommonRetrieverOptionsSchema } from 'genkit/retriever';
-import { cosmosContainer, embedText, EMBEDDING_VECTOR_SIZE } from '../flows/indexerFlow.js';
-import { text } from 'express';
+import { getVectorContainer } from '../cosmosDB/utils.js';
+import { embedText } from '../flows/indexerFlow.js';
+
+const cosmosContainer = await getVectorContainer();
+
 
 const hybridRetrieverOptionsSchema = CommonRetrieverOptionsSchema.extend({
     // 'k' is already in CommonRetrieverOptionsSchema, but you could add others:

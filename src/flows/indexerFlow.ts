@@ -24,18 +24,7 @@ import {  CLIPTokenizer,
     RawImage, 
     cos_sim, 
     cat} from '@xenova/transformers';
-// import { QdrantClient } from '@qdrant/js-client-rest';
-import { CosmosClient } from '@azure/cosmos';
-import {
-    ContainerDefinition,
-    PartitionKeyDefinition,
-    PartitionKeyKind,
-    IndexingMode,
-    VectorEmbeddingPolicy,
-    VectorEmbeddingDataType,
-    VectorEmbeddingDistanceFunction,
-    VectorIndex,
-} from '@azure/cosmos';
+import { getVectorContainer } from '../cosmosDB/utils.js';
 import { randomUUID } from "node:crypto";
 
 const chunkingConfig = {
@@ -50,57 +39,7 @@ function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export const EMBEDDING_VECTOR_SIZE = 512;
-
-export const cosmos_client = new CosmosClient({ 
-    endpoint: process.env.COSMOS_CLIENT_URL,
-    key: process.env.COSMOS_CLIENT_KEY
-});
-
-const cosmosDatabaseId = process.env.COSMOS_DATABASE_ID;
-if( !cosmosDatabaseId ) {
-    throw new Error('COSMOS_DATABASE_ID is not defined in environment variables.');
-}
-
-const cosmosContainerId = process.env.COSMOS_CONTAINER_ID;
-if( !cosmosContainerId ) {
-    throw new Error('COSMOS_CONTAINER_ID is not defined in environment variables.');
-}
-
-// const cosmosDatabase = cosmos_client.database(cosmosDatabaseId);
-export const cosmosContainer = await createVectorContainer();
-
-async function createVectorContainer() {
-    // Ensure the database exists
-    const { database } = await cosmos_client.databases.createIfNotExists({ id: cosmosDatabaseId });
-  
-    // Create the container with vector index
-    const { container } = await database.containers.createIfNotExists({
-      id: cosmosContainerId,
-      partitionKey: {
-        paths: ['/TenantId'],
-        kind: PartitionKeyKind.Hash,
-      },
-      indexingPolicy: {
-        indexingMode: IndexingMode.consistent,
-        automatic: true
-      },
-      vectorEmbeddingPolicy: {
-        vectorEmbeddings: [
-            {
-                path: '/embedding',
-                dataType: VectorEmbeddingDataType.Float32,
-                distanceFunction: VectorEmbeddingDistanceFunction.Cosine,
-                dimensions: EMBEDDING_VECTOR_SIZE
-            }
-        ]
-    }
-    });
-  
-    logger.debug(`Vector container '${cosmosContainerId}' is ready`);
-    return container;
-  }
-
+const cosmosContainer = await getVectorContainer();
 
 // Use CLIP as multimodal embedding model.
 // Refer to this article for more information: https://www.tigerdata.com/blog/how-to-build-an-image-search-application-with-openai-clip-postgresql-in-javascript
