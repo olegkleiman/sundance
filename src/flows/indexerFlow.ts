@@ -101,6 +101,7 @@ async (contentMapUrl: string) => {
                 return;
 
             logger.debug(`${++index}: ${url.loc}`);
+            const tenantId = process.env.TENANT_ID;
 
             try {
                 await sleep(300);
@@ -113,36 +114,73 @@ async (contentMapUrl: string) => {
  
                 const $ = cheerio.load(contentText); // From this poin on, manipulate the page content using cheerio
                 // Manipulation primarly means adaption the HTML to be more amenable to text extraction
-                $('script, style, iframe, noscript, svg, link, meta, object, embed, head, xml').remove();
+                // $('script, style, iframe, noscript, svg, link, meta, object, embed, head, xml').remove();
 
-                $('body').contents().each(function () {
-                    if(this.type==='comment'){
-                        $(this).remove(); }
-                });
+                // $('body').contents().each(function () {
+                //     if(this.type==='comment'){
+                //         $(this).remove(); }
+                // });
 
-                const pageText = $('body').text().replace(/<!\[CDATA\[.*?/gs, '').trim();
+                const contentBlocks = $('.DCContentBlock');
+                for( const block of contentBlocks ) {
+                    const chunk = $(block).text().replace(/\n/g, '').trim();
+                    logger.debug(chunk);
 
-                const bodyText = pageText.replace(/\s+/g, ' ').trim();
-
-                const chunks = chunk(bodyText, chunkingConfig);
-
-                for( const chunk of chunks) {
                     const queryEmbedding = await embedText(chunk);
-
                     const item = {
                         id: randomUUID(),
                         embedding: queryEmbedding,
-                        TenantId: "aa640f10-95f8-4f05-96f1-529dbbc11897",
+                        TenantId: tenantId,
                         payload: {
                             url: url.loc,
                             text: chunk
                         }
                     }
-
                     const cosmosItem = await cosmosContainer.items.upsert(item);
-                    logger.debug(cosmosItem);
+                    logger.debug(`Upserted item: ${cosmosItem.item.id} rom ${url.loc}`);
+                    
+                    // const chunks = chunk(text, chunkingConfig);
+                    // for( const chunk of chunks) {
+                    //     const queryEmbedding = await embedText(chunk);
 
+                    //     const item = {
+                    //         id: randomUUID(),
+                    //         embedding: queryEmbedding,
+                    //         TenantId: tenantId,
+                    //         payload: {
+                    //             url: url.loc,
+                    //             text: chunk
+                    //         }
+                    //     }
+
+                    //     const cosmosItem = await cosmosContainer.items.upsert(item);
+                    //     logger.debug(`Upserted item: ${cosmosItem.item.id} rom ${url.loc}`);
+                    // }
                 }
+
+
+                // const pageText = $('body').text().replace(/<!\[CDATA\[.*?/gs, '').trim();
+                // const bodyText = pageText.replace(/\s+/g, ' ').trim();
+
+                // const chunks = chunk(bodyText, chunkingConfig);
+
+                // for( const chunk of chunks) {
+                //     const queryEmbedding = await embedText(chunk);
+
+                //     const item = {
+                //         id: randomUUID(),
+                //         embedding: queryEmbedding,
+                //         TenantId: tenantId,
+                //         payload: {
+                //             url: url.loc,
+                //             text: chunk
+                //         }
+                //     }
+
+                //     const cosmosItem = await cosmosContainer.items.upsert(item);
+                //     logger.debug(`Upserted item: ${cosmosItem.item.id} rom ${url.loc}`);
+
+                // }
 
             } catch (error: any) {
                 logger.error(`Failed to fetch ${url.loc}:`, error);
