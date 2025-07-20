@@ -14,9 +14,9 @@ import { ai } from '../genkit.js';
 import { executeGraphQLTool, 
          graphQLSchema } from '../tools/executeGraphQL.js';
 
-export const CompleteFlow = ai.defineFlow(
+export const CompletionFlow = ai.defineFlow(
     {
-        name: "CompleteFlow",
+        name: "CompletionFlow",
         inputSchema: z.string(),
         outputSchema: z.any(),
     },

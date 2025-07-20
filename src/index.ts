@@ -24,7 +24,7 @@ import { ai } from './genkit.js' //'./genkit.ts';
 import { ToolsFlow } from './tools_flow.js';
 import { toolDefinitions, toolDescriptions } from './mcpClient.js';
 import { SearchFlow } from './flows/searchFlow.js';
-import { CompleteFlow } from './flows/completeFlow.js';
+import { CompletionFlow } from './flows/completionFlow.js';
 import { IngestionFlow } from './flows/ingestionFlow.js';
 import { hybridRetriever } from './retrievers/hybridRetriever.js';
 
@@ -183,7 +183,7 @@ app.post('/login', async (req, res) => {
       })
 })
 
-app.get('/complete', async (req, res) => { 
+app.get('/completion', async (req, res) => { 
     
     const access_token = req.cookies["access_token"];
 
@@ -224,7 +224,8 @@ app.get('/complete', async (req, res) => {
             }
         });        
 
-        const stream = await CompleteFlow(userUtterance, {
+        // Completion step  
+        const stream = await CompletionFlow(userUtterance, {
             context: {
                 headers: req.headers,
                 access_token: access_token,

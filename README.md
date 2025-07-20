@@ -16,21 +16,26 @@ Practically **Sundance** server combines the user's input with a GraphQL schema 
 ### How to build
 1. Re-create .env file by [authenticate](https://onedrive.live.com/?id=f7fcac94e18e43af8ed195c15f222c9b&cid=AAB8403F89EC60E6) to give the working file.
 ```
-LOGIN_URL = https://api.tel-aviv.gov.il/sso/login
-TOKEN_VALIDATION_URL = https://api.tel-aviv.gov.il/sso/validate_token
-GRAPHQL_URL=<xxx>
-CLIENT_ID=<xxx>
-LOGIN_SCOPE=xxx
-LOGIN_DEVICE_ID=xxx
-GEMINI_API_KEY=xxx
-ANTHROPIC_API_KEY=xxx
-HF_KEY=xxx
-SITE_MAP_URL=https://www.tel-aviv.gov.il/sitemap.xml
+LOGIN_URL = "https://api.tel-aviv.gov.il/sso/login"
+TOKEN_VALIDATION_URL = "https://api.tel-aviv.gov.il/sso/validate_token"
+GRAPHQL_URL = "http://localhost:8080"
+CLIENT_ID =<xxx>
+LOGIN_SCOPE=<xxx>
+LOGIN_DEVICE_ID=<xxx>
+ANTHROPIC_API_KEY=<xxx>
+GEMINI_API_KEY=<xxx>
+HF_KEY=<xxx>
+PORT=8099
 COSMOS_CLIENT_URL=https://sundance.documents.azure.com:443/
 COSMOS_CLIENT_KEY=<xxx>
 COSMOS_DATABASE_ID=<xxx>
 COSMOS_CONTAINER_ID=<xxx>
-TOP_N=3
+SEARCH_TOP_N=3
+TENANT_ID=<xxx>
+OPENAI_API_KEY=<xxx>
+EMBEDDING_MODEL=text-embedding-3-small
+MAX_CHUNK_LENGTH=200
+
 ```
 2. Run `npm install` to install dependencies
 3. Run `npm run build` to build the project

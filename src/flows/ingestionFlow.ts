@@ -1,4 +1,4 @@
-// indexerFlow.ts
+// ingestionFlow.ts
 // Sundance project
 
 // Ingest documents from a sitemap: 
@@ -30,7 +30,7 @@ const chunkingConfig = {
 } as any;
 
 function sleep(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 const embedding_model = process.env.EMBEDDING_MODEL;
@@ -39,22 +39,42 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
+const MAX_CHUNK_LENGTH = parseInt(process.env.MAX_CHUNK_LENGTH || "200");
+const tenantId = process.env.TENANT_ID;
+const cosmosContainer = await getVectorContainer();
+
 // Returns standard JavaScript number array instead of Float32Array that by default returned from soma models (like CLIP)
 // This is because Cosmos DB used as vector DB, stores the enbeddings as plain JS Array.
 // See VectorDistance documentation for more information: https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/query/vectordistance
 export async function embedText(text: string): Promise<number[]> {
+    
     try {
-        
+
         const _embedding = await openai.embeddings.create({
-            model: embedding_model ?? "text-embedding-ada-002", 
-            input: text,
+          model: embedding_model ?? 'text-embedding-ada-002',
+          input: text,
         });
 
         return _embedding.data[0].embedding;
+
     } catch (error) {
         console.error(`Error processing text:`, error);
         throw error;
     }
+}
+
+const embedAndUpsert = async (text: string) => {
+    const embedding = await embedText(text);
+    const item = {
+        id: randomUUID(),
+        embedding: embedding,
+        TenantId: tenantId,
+        payload: {
+            text: text
+        }
+    }
+    const cosmosItem = await cosmosContainer.items.upsert(item);
+    logger.debug(`Upserted item: ${cosmosItem.item.id}`);
 }
 
 export const IngestionFlow = ai.defineFlow({
@@ -62,8 +82,6 @@ export const IngestionFlow = ai.defineFlow({
     inputSchema: z.string().describe("sitemap file path or URL"),
 },
 async (contentMapUrl: string) => {
-
-    const cosmosContainer = await getVectorContainer();
 
     let xmlContent: string = "";
 
@@ -85,14 +103,14 @@ async (contentMapUrl: string) => {
     const parser = new XMLParser();
     const json = parser.parse(xmlContent);
 
-    const tenantId = process.env.TENANT_ID;
-
     if( !tenantId ) {
         throw new Error('TENANT_ID is not defined in environment variables.');
     }
 
     const processUrl = async (url: any) => {
         logger.debug(`Processing URL: ${url.loc}`);
+
+        await sleep(200); // Simple rate limiting
 
         const content = await fetch(url.loc);
         if (!content.ok) {
@@ -104,21 +122,15 @@ async (contentMapUrl: string) => {
         try {
             const contentBlocks = $('.DCContentBlock');
             for (const block of contentBlocks) {
-                const chunk = $(block).text().replace(/\n/g, '').trim();
-                if (chunk.length === 0) continue;
-
-                const queryEmbedding = await embedText(chunk);
-                const item = {
-                    id: randomUUID(),
-                    embedding: queryEmbedding,
-                    TenantId: tenantId,
-                    payload: {
-                        url: url.loc,
-                        text: chunk
-                    }
+                const text = $(block).text().replace(/\n/g, '').trim();
+                if (text.length > MAX_CHUNK_LENGTH ) {
+                    const chunks = chunk(text, chunkingConfig);
+                    for (const chunk of chunks) {
+                        await embedAndUpsert(chunk);
+                    } 
+                } else {
+                    await embedAndUpsert(text);
                 }
-                const cosmosItem = await cosmosContainer.items.upsert(item);
-                logger.debug(`Upserted item: ${cosmosItem.item.id} rom ${url.loc}`);
             }
         } catch (error) {
             console.error(`Error processing URL:`, error);
