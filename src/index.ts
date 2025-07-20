@@ -22,11 +22,10 @@ dotenv.config();
 
 import { ai } from './genkit.js' //'./genkit.ts';
 import { ToolsFlow } from './tools_flow.js';
-import { anthropicFlow } from './anthropicFlow.js';
 import { toolDefinitions, toolDescriptions } from './mcpClient.js';
 import { SearchFlow } from './flows/searchFlow.js';
-import { SundanceFlow } from './flows/sundanceFlow.js';
-import { IndexFlow } from './flows/indexerFlow.js';
+import { CompleteFlow } from './flows/completeFlow.js';
+import { IngestionFlow } from './flows/ingestionFlow.js';
 import { hybridRetriever } from './retrievers/hybridRetriever.js';
 
 const app = express();
@@ -112,13 +111,13 @@ app.post('/init', authenticateToken, async (req, res) => {
 const tokenCache = new Map<string, { payload: any; timestamp: number }>();
 const TOKEN_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-app.post('/indexer', async (req, res) => {
+app.post('/ingest', async (req, res) => {
 
     const url = req.body.url;
     if( !url ) {
         throw new Error('URL is not defined in request body.');
     }
-    await IndexFlow(url);
+    await IngestionFlow(url);
     
     return res.status(202).send();
 })
@@ -225,7 +224,7 @@ app.get('/complete', async (req, res) => {
             }
         });        
 
-        const stream = await SundanceFlow(userUtterance, {
+        const stream = await CompleteFlow(userUtterance, {
             context: {
                 headers: req.headers,
                 access_token: access_token,
@@ -248,20 +247,6 @@ app.get('/complete', async (req, res) => {
         closeConnection();
     }
 })
-
-app.get('/anthropicFlow', async (req, res) => {
-    try {
-        const userUtterance = req.session.userUtterance;
-        if (!userUtterance) {
-            return res.status(400).json({ error: 'Chat not initialized. Please set a prompt first via /init.' });
-        }
-        const response = await anthropicFlow(userUtterance);
-        res.status(200).send(response);
-    } catch (error: any) {
-        logger.error('Error in /anthropicFlow:', error);
-        res.status(500).json({ error: error?.message || 'An unexpected error occurred.' });
-    }
-});
 
 const PORT = process.env.PORT || 8099;
 app.listen(PORT, () => console.info(`Sundance Server listening on http://localhost:${PORT}`) )

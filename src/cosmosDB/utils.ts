@@ -12,7 +12,7 @@ import {
 } from '@azure/cosmos';
 import { logger } from 'genkit/logging';
 
-export const EMBEDDING_VECTOR_SIZE = 512;
+export const EMBEDDING_VECTOR_SIZE = 1536;
 
 export const cosmos_client = new CosmosClient({ 
     endpoint: process.env.COSMOS_CLIENT_URL,

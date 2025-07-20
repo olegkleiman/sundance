@@ -10,10 +10,7 @@ import * as z from 'zod';
 import { logger } from 'genkit/logging';
 import { Document, CommonRetrieverOptionsSchema } from 'genkit/retriever';
 import { getVectorContainer } from '../cosmosDB/utils.js';
-import { embedText } from '../flows/indexerFlow.js';
-
-const cosmosContainer = await getVectorContainer();
-
+import { embedText } from '../flows/ingestionFlow.js';
 
 const hybridRetrieverOptionsSchema = CommonRetrieverOptionsSchema.extend({
     // 'k' is already in CommonRetrieverOptionsSchema, but you could add others:
@@ -28,10 +25,12 @@ export const hybridRetriever = ai.defineRetriever(
     },
     async( query: Document, options: z.infer<typeof hybridRetrieverOptionsSchema> ) => {
         
+        const cosmosContainer = await getVectorContainer();
+
         logger.info(`Hybrid Retriever received query: ${query.text}`);
 
-        const initialK = options.preRerankK || 10; // Default to 10 if not provided
-        const finalK = options.k ?? 3; // Default final number of docs to 3 if k is not set
+        // const initialK = options.preRerankK || 10; // Default to 10 if not provided
+        // const finalK = options.k ?? 3; // Default final number of docs to 3 if k is not set
 
         const embeddingArray = await embedText(query.text);
         const topN = process.env.SEARCH_TOP_N || 10;    // default to 10

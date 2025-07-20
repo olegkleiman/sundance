@@ -14,9 +14,9 @@ import { ai } from '../genkit.js';
 import { executeGraphQLTool, 
          graphQLSchema } from '../tools/executeGraphQL.js';
 
-export const SundanceFlow = ai.defineFlow(
+export const CompleteFlow = ai.defineFlow(
     {
-        name: "SundanceFlow",
+        name: "CompleteFlow",
         inputSchema: z.string(),
         outputSchema: z.any(),
     },
