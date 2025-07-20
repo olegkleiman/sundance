@@ -6,6 +6,8 @@
 // 
 
 import express, { Request, Response, NextFunction } from 'express';
+import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
 import session from 'express-session'
 import cors from 'cors';
 
@@ -43,6 +45,42 @@ app.use(session({
     secret: process.env.SESSION_SECRET || 'secret',
     cookie: { secure: isProduction }
 }))
+
+
+const swaggerOptions = {
+    definition: {
+      openapi: '3.0.0',
+      info: {
+        title: 'Sundance AI Chatbox API',
+        version: '1.0.0',
+        description: 'Privacy-respecting RAG-based AI chatbox',
+      },
+      servers: [
+        {
+          url: `http://localhost:${process.env.PORT || 8099}`,
+          description: 'Development server',
+        },
+      ],
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+          },
+          apiKeyAuth: {
+            type: 'apiKey',
+            in: 'header',
+            name: 'x-api-key',
+          },
+        },
+      },
+    },
+    apis: ['./src/**/*.ts', './index.ts'], // Include all TypeScript files
+  };
+
+const specs = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 export async function authenticateToken(req: Request, res: Response, next: NextFunction): Promise<void> {
 
@@ -96,6 +134,28 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../public', 'index.html'));
 });
 
+/**
+ * @swagger
+ * /init:
+ *   post:
+ *     summary: Initialize a new conversation
+ *     tags: [Chat]
+ *     responses:
+ *       200:
+ *         description: Success 
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               data:
+ *                 type: string
+ *                 example: מה החוב שלי לארנונה?
+ */
 app.post('/init', authenticateToken, async (req, res) => {
     logger.debug('Session before /init:', req.sessionID, req.session);
 
@@ -126,6 +186,30 @@ const authenticateKey = (req: Request, res: Response, next: NextFunction) => {
     }
   }
 
+/**
+ * @swagger
+ * /ingest:
+ *   tags: [Ingest]
+ *   post:
+ *     summary: Ingests website content for RAG
+ *     tags: [RAG]
+ *     responses:
+ *       202:
+ *         description: Accepted 
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               url:
+ *                 type: string
+ *                 example: "https://www.tel-aviv.gov.il:443/sitemap0.xml"
+ *               lang:
+ *                 type: string
+ *                 example: "he"
+ */    
 app.post('/ingest', authenticateKey, async (req, res) => {
 
     const url = req.body.url;
@@ -198,6 +282,25 @@ app.post('/login', async (req, res) => {
       })
 })
 
+/**
+ * @swagger
+ * /completion:
+ *   get:
+ *     summary: Get chat completion response via Server-Sent Events (SSE)
+ *     tags: [Chat]
+ *     responses:
+ *       200:
+ *         description: Success
+ *         content:
+ *           text/event-stream:
+ *             schema:
+ *               type: string
+ *               example: |
+ *                 event: message
+ *                 data: {"text":"להלן פרוט החובות שלך..."}
+ *     security:
+ *       - bearerAuth: []
+ */
 app.get('/completion', async (req, res) => { 
     
     const access_token = req.cookies["access_token"];

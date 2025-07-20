@@ -63,14 +63,15 @@ export async function embedText(text: string): Promise<number[]> {
     }
 }
 
-const embedAndUpsert = async (text: string) => {
+const embedAndUpsert = async (text: string, url: string) => {
     const embedding = await embedText(text);
     const item = {
         id: randomUUID(),
         embedding: embedding,
         TenantId: tenantId,
         payload: {
-            text: text
+            text: text,
+            url: url
         }
     }
     const cosmosItem = await cosmosContainer.items.upsert(item);
@@ -126,10 +127,10 @@ async (contentMapUrl: string) => {
                 if (text.length > MAX_CHUNK_LENGTH ) {
                     const chunks = chunk(text, chunkingConfig);
                     for (const chunk of chunks) {
-                        await embedAndUpsert(chunk);
+                        await embedAndUpsert(chunk, url.loc);
                     } 
                 } else {
-                    await embedAndUpsert(text);
+                    await embedAndUpsert(text, url.loc);
                 }
             }
         } catch (error) {
@@ -152,7 +153,8 @@ async (contentMapUrl: string) => {
         !url.loc.includes("/ar") && !url.loc.includes("/en")
     );                
 
-    await processInBatches(urls, 10, processUrl);
+    const batchSize = parseInt(process.env.INGESTION_BATCH_SIZE || "10");
+    await processInBatches(urls, batchSize, processUrl);
     
     return;
 })

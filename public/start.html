@@ -118,7 +118,7 @@
       let position = window.innerWidth;
       let content = '';
 
-      const eventSource = new EventSource("./chat");
+      const eventSource = new EventSource("./completion");
       eventSource.onmessage = (event) => {
         content += event.data;
         ticker.textContent = content;

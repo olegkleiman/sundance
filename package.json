@@ -18,7 +18,6 @@
     "@genkit-ai/googleai": "^1.14.0",
     "@genkit-ai/vertexai": "^1.14.0",
     "@modelcontextprotocol/sdk": "^1.13.2",
-    "@qdrant/js-client-rest": "^1.14.1",
     "cheerio": "^1.1.0",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.0.0",
@@ -29,6 +28,8 @@
     "jwt-decode": "^4.0.0",
     "llm-chunk": "^0.0.1",
     "openai": "^5.10.1",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "zod": "^3.25.67"
   },
   "devDependencies": {
@@ -37,6 +38,8 @@
     "@types/cors": "^2.8.19",
     "@types/express-session": "^1.18.2",
     "@types/node": "^24.0.8",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3"
