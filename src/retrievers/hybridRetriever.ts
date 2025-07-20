@@ -44,7 +44,7 @@ export const hybridRetriever = ai.defineRetriever(
           `
         };
         const { resources } = await cosmosContainer.items.query(querySpec).fetchAll();
-
+        logger.info(`Hybrid Retriever retrieved ${resources.length} documents`);
 
         // --- Merge & Deduplicate Results ---
         // Use a Map to store unique documents by content hash
