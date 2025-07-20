@@ -111,7 +111,22 @@ app.post('/init', authenticateToken, async (req, res) => {
 const tokenCache = new Map<string, { payload: any; timestamp: number }>();
 const TOKEN_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-app.post('/ingest', async (req, res) => {
+const API_KEY = process.env.API_KEY;
+if( !API_KEY ) {
+    throw new Error('API_KEY is not defined in environment variables.');
+}
+
+// Middleware to check API key
+const authenticateKey = (req: Request, res: Response, next: NextFunction) => {
+    const key = req.header('x-api-key');
+    if (key === API_KEY) {
+      next();
+    } else {
+      res.status(401).json({ error: 'Unauthorized: Invalid API Key' });
+    }
+  }
+
+app.post('/ingest', authenticateKey, async (req, res) => {
 
     const url = req.body.url;
     if( !url ) {
