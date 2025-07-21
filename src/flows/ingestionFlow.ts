@@ -43,6 +43,20 @@ const MAX_CHUNK_LENGTH = parseInt(process.env.MAX_CHUNK_LENGTH || "200");
 const tenantId = process.env.TENANT_ID;
 const cosmosContainer = await getVectorContainer();
 
+// Accepts an array of texts and returns an array of embeddings
+export async function embedTexts(texts: string[]): Promise<number[][]> {
+    try {
+        const response = await openai.embeddings.create({
+            model: embedding_model ?? 'text-embedding-ada-002',
+            input: texts,
+        });
+        return response.data.map(item => item.embedding);
+    } catch (error) {
+        logger.error(`Error processing batch:`, error);
+        throw error;
+    }
+}
+
 // Returns standard JavaScript number array instead of Float32Array that by default returned from soma models (like CLIP)
 // This is because Cosmos DB used as vector DB, stores the enbeddings as plain JS Array.
 // See VectorDistance documentation for more information: https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/query/vectordistance
@@ -58,7 +72,7 @@ export async function embedText(text: string): Promise<number[]> {
         return _embedding.data[0].embedding;
 
     } catch (error) {
-        console.error(`Error processing text:`, error);
+        logger.error(`Error processing text:`, error);
         throw error;
     }
 }
@@ -97,7 +111,7 @@ async (contentMapUrl: string) => {
             xmlContent = await content.text();
         }
     } catch (error) {
-        console.error(`Error processing URL:`, error);
+        logger.error(`Error processing URL:`, error);
         throw error;
     }
 
@@ -120,6 +134,9 @@ async (contentMapUrl: string) => {
         const contentText = await content.text();
         const $ = cheerio.load(contentText);
 
+        // We'll embed the texts in batch, so gather the texts into the array
+        // and embed them all at once.
+        const texts = [];
         try {
             const contentBlocks = $('.DCContentBlock');
             for (const block of contentBlocks) {
@@ -127,14 +144,40 @@ async (contentMapUrl: string) => {
                 if (text.length > MAX_CHUNK_LENGTH ) {
                     const chunks = chunk(text, chunkingConfig);
                     for (const chunk of chunks) {
-                        await embedAndUpsert(chunk, url.loc);
+                        if( chunk.length > 0 )
+                            texts.push(chunk);
+                        //await embedAndUpsert(chunk, url.loc);
                     } 
                 } else {
-                    await embedAndUpsert(text, url.loc);
+                    if( text.length > 0 )
+                        texts.push(text);
+                    //await embedAndUpsert(text, url.loc);
                 }
             }
+
+            if( texts.length === 0 ) {
+                logger.debug(`No texts found for URL: ${url.loc}`);
+                return;
+            }
+
+            const embeddings = await embedTexts(texts);
+            const items = texts.map((text, idx) => ({
+                id: randomUUID(),
+                embedding: embeddings[idx],
+                TenantId: tenantId,
+                payload: { text, url }
+            }));
+            
+            await cosmosContainer.items.bulk(
+                items.map(item => ({
+                    operationType: "Upsert",
+                    resourceBody: item
+                }))
+            );
+            logger.debug(`Upserted ${items.length} items`);
+
         } catch (error) {
-            console.error(`Error processing URL:`, error);
+            logger.error(`Error processing URL:`, error);
             throw error;
         }
     }

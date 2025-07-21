@@ -5,10 +5,8 @@ import { logger } from 'genkit/logging';
 
 export const ai = genkit({
     plugins: [
-        // anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }),
         googleAI(), // automatically look for GOOGLE_API_KEY in your environment.
         vertexAI(),
-        
     ],
     promptDir: './llm_prompts',
     model: gemini25ProExp0325

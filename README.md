@@ -18,8 +18,8 @@ Sundance is a pluggable, privacy-respecting AI chatbox that integrates:
 
 ### 1. Frontend  (Client)
 
-* Served as index.html with native JS (no React or frameworks)
-* Prompts for microphone, camera, and geolocation permissions on load.
+* Served as index.html with vanila JS (no React or frameworks)
+* Prompts for microphone, camera, geolocation permissions on load.
 * Present the microphone icon that starts the Voice Recognition with browser build-in [speech recognition API](https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition).
 * The recognition begins when the end-user clicks on the microphone icon.
 * The recognition ends when the API decides that the end-user stopped speaking.
@@ -28,16 +28,6 @@ Sundance is a pluggable, privacy-respecting AI chatbox that integrates:
 * The backend sends the user input to the LLM via HTTP POST request to /completion endpoint.
 * The LLM sends the response to the frontend via HTTP GET request to /completion endpoint.
 * The frontend displays the response in the animated running line below the shown user input.
-
-### 2. Backend (Server)
-
-•	Built with Node.js and Express.js.
-
-•	Handles with middleware authentication via JWT.
-
-•	Exposes multiple endpoints:
-
-    •	/init - Initializes a new conversation. Stores in the session variabl the user's utterance.
 
 ### 2. Backend (Server)
 
@@ -57,8 +47,8 @@ Sundance is a pluggable, privacy-respecting AI chatbox that integrates:
  *     summary: Ingests website content for RAG
  *     tags: [RAG]
  *     responses:
- *       200:
- *         description: Success 
+ *       202:
+ *         description: Accepted 
  *     requestBody:
  *       required: true
  *       content:
@@ -68,9 +58,11 @@ Sundance is a pluggable, privacy-respecting AI chatbox that integrates:
  *             properties:
  *               url:
  *                 type: string
+ *                 example: "https://www.tel-aviv.gov.il:443/sitemap0.xml"
  *               lang:
  *                 type: string
- */     
+ *                 example: "he"
+ */    
 ```
 
 *  **/init** - Initializes a new conversation. Stores in the session variabl the user's utterance.
@@ -86,6 +78,16 @@ Sundance is a pluggable, privacy-respecting AI chatbox that integrates:
  *         description: Success 
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               data:
+ *                 type: string
+ *                 example: מה החוב שלי לארנונה?
  */
 ``` 
 * ***/completion** - Performs the RAG step by a help of hybridRetriever. Sends the stored in session user's input in the context of the documents received on RAG step.
@@ -99,6 +101,13 @@ Sundance is a pluggable, privacy-respecting AI chatbox that integrates:
  *     responses:
  *       200:
  *         description: Success
+ *         content:
+ *           text/event-stream:
+ *             schema:
+ *               type: string
+ *               example: |
+ *                 event: message
+ *                 data: {"text":"להלן פרוט החובות שלך..."}
  *     security:
  *       - bearerAuth: []
  */
@@ -169,6 +178,7 @@ The sitemap structure is as follows:
 
 5. The **/ingest** endpoint then processes the refered pages in batches of INGESTION_BATCH_SIZE (default is 10).
 If needed, each fetched page is chunked into MAX_CHUNK_LENGTH (default is 200) and these chunks' embeddings are upserted to the Cosmos DB container.
+Thanks to OpenAI's embeddings API, this process is efficient and fast because it allows to generate embeddings for multiple texts in a [single](openai.embeddings.create) request.
 Additional fields are upserted as well:
 
 **- url**: the URL of the page like "https://www.tel-aviv.gov.il/Residents/Digitel/Pages/Digitel.aspx",
@@ -202,12 +212,45 @@ The system uses [Gemini 2.5 Pro](https://cloud.google.com/vertex-ai/generative-a
 
 ## GraphQL Integration
 
-Sundance’s backend acts as a wrapper for a GraphQL server exposed to the LLM via a universal executeGraphQL tool.
+Sundance’s backend acts as a wrapper for a GraphQL server exposed to the LLM via a universal **executeGraphQL** tool.
 It relies on the LLM’s function-calling capability. Sundance dynamically:
 
-* Combines the user’s input with a GraphQL schema,
-* Injects it into the prompt,
-* Uses the tool call (executeGraphQL) to generate and run a valid query against the GraphQL server (defined by GRAPHQL_URL in the .env file).
+* Combines the user’s input with a GraphQL schema to ask LLM to generate a valid query.
+The prompt presented to LLM could look like:
+```text
+---
+model: googleai/gemini-2.5-pro
+config:
+    temperature: 0.9
+input:
+    schema:
+        schemaSDL: string
+        userInput: string
+
+---
+
+{{role "system"}}
+You are a helpful assistant with access to a GraphQL schema and relevant context retrieved using semantic search. Your primary goal is to answer user questions by generating a GraphQL query and then using the `executedGraphQL` tool to run it.
+You will be given a GraphQL schema and a user's question. Follow these steps:
+1. Analyze the user's question.
+2. Examine the provided GraphQL schema to understand the available data, types, and queries.
+3. Construct a valid GraphQL query to retrieve the information needed to answer the user's question.
+4. Call the `executedGraphQL` tool with the query you constructed.
+5. Once you receive the data from the tool, formulate a clear, natural-language answer for the user. Do not show the raw data in your response.
+6. If the `executedGraphQL` tool returns an error, analyze the error message. If it is a GraphQL syntax or validation error, correct your query based on the feedback and the schema, then call the tool again.
+
+Here is the GraphQL schema you must use:
+---
+{{schemaSDL}}
+---
+Answer in Hebrew.
+---
+
+{{role "user"}}
+User Question: "{{userInput}}"
+```
+* Injects it into the prompt
+* Uses the tool call (executeGraphQL) to generate and run a valid query against the GraphQL server (defined by GRAPHQL_URL in the .env file)
 
 ### GraphQL Schema Integration in Prompt
 
