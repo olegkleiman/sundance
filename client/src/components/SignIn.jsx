@@ -1,0 +1,100 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+const SignIn = () => {
+    const navigate = useNavigate();
+    const [phoneNumber, setPhoneNumber] = useState('313069486');
+    const [otp, setOtp] = useState('');   
+    const [phoneTouched, setPhoneTouched] = useState(false);
+    const [otpTouched, setOtpTouched] = useState(false);
+    const [phoneError, setPhoneError] = useState('');
+    const [otpError, setOtpError] = useState('');
+
+    const handleLogin = async () => {
+        setPhoneTouched(true);
+        setOtpTouched(true);
+        let hasError = false;
+        if (!phoneNumber.trim()) {
+            setPhoneError('User Name is required');
+            hasError = true;
+        } else {
+            setPhoneError('');
+        }
+        if (!otp.trim()) {
+            setOtpError('OTP is required');
+            hasError = true;
+        } else {
+            setOtpError('');
+        }
+        if (hasError) return;
+        try {
+            const response = await fetch('http://localhost:8099/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    phoneNumber,
+                    otp,
+                }),
+            });
+            const data = await response.json();
+            if (response.ok) {
+                // Handle successful login: redirect to Site
+                console.log('Login successful', data);
+                navigate('/site'); // or navigate('*') if that's your catch-all route
+            } else {
+                // Handle login error
+                console.error('Login failed', data);
+                alert(data.message || 'Login failed');
+            }
+        } catch (error) {
+            console.error('Network error', error);
+            alert('Network error');
+        }
+    };
+
+
+    return (
+        <div className="signin-container">
+            <div className="signin-title">SunDance</div>
+            <label htmlFor="phoneNumber" className="signin-label">User Name: <span style={{color: 'red'}}>*</span></label>
+            <input
+                id="phoneNumber"
+                className={`signin-input${phoneTouched && !phoneNumber.trim() ? ' signin-input-error' : ''}`}
+                type="text"
+                value={phoneNumber}
+                onChange={e => setPhoneNumber(e.target.value)}
+                onBlur={() => setPhoneTouched(true)}
+                placeholder="ID Number"
+                autoComplete="phoneNumber"
+                required
+                aria-required="true"
+                aria-invalid={phoneTouched && !phoneNumber.trim()}
+            />
+            {phoneTouched && !phoneNumber.trim() && (
+                <div style={{ color: 'red', fontSize: '0.95em', marginBottom: 10 }}>{phoneError || 'User Name is required'}</div>
+            )}
+            <label htmlFor="otp" className="signin-label">OTP: <span style={{color: 'red'}}>*</span></label>
+            <input
+                id="otp"
+                className={`signin-input${otpTouched && !otp.trim() ? ' signin-input-error' : ''}`}
+                type="text"
+                value={otp}
+                onChange={e => setOtp(e.target.value)}
+                onBlur={() => setOtpTouched(true)}
+                placeholder="OTP"
+                autoComplete="one-time-code"
+                required
+                aria-required="true"
+                aria-invalid={otpTouched && !otp.trim()}
+            />
+            {otpTouched && !otp.trim() && (
+                <div style={{ color: 'red', fontSize: '0.95em', marginBottom: 10 }}>{otpError || 'OTP is required'}</div>
+            )}
+            <button className="signin-button" onClick={handleLogin}>Log In</button>
+        </div>
+    );
+};
+
+export default SignIn;

@@ -59,7 +59,10 @@ export const hybridRetriever = ai.defineRetriever(
         return {
             documents: resources.map((doc) => ({
                 content: [
-                { text: doc.payload.text }
+                { 
+                    text: doc.payload.text,
+                    url: doc.payload.url
+                }
                 ],
                 metadata: doc,
             }))

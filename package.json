@@ -5,8 +5,13 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "start": "DEBUG=genkit:* npx tsx src/index.ts"
+    "start": "DEBUG=genkit:* npx tsx src/index.ts",
+    "compile": "npm run compile --workspace=client",
+    "client": "npm run start --workspace=client"
   },
+  "workspaces": [
+    "client"
+  ],
   "keywords": [],
   "author": "",
   "license": "ISC",
