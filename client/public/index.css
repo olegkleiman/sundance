@@ -68,3 +68,35 @@ body {
   background: linear-gradient(90deg, #6366f1 60%, #14b8a6 100%);
   transform: translateY(-1px) scale(1.01);
 }
+
+.start-button {
+  padding: 30px 60px;
+  font-size: 24px;
+  border-radius: 50px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.start-button.animate {
+  transform: scale(1.2);
+}
+
+
+.circle-btn {
+  width: 192px;
+  height: 192px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #46a6ff 0%, #7f53ac 100%);
+  box-shadow: 0 12px 48px 0 rgba(127, 83, 172, 0.22), 0 8px 32px rgba(70, 166, 255, 0.17);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  transition: background 0.4s, box-shadow 0.2s;
+  padding: 0;
+}

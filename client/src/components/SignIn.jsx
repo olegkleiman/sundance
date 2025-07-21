@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const SignIn = () => {
+    const { login } = useAuth();
     const navigate = useNavigate();
     const [phoneNumber, setPhoneNumber] = useState('0543307026');
     const [otp, setOtp] = useState('');   
@@ -40,8 +42,9 @@ const SignIn = () => {
             });
             const data = await response.json();
             if (response.ok) {
-                // Handle successful login: redirect to Site
+                // Handle successful login: set auth and redirect to Site
                 console.log('Login successful', data);
+                login();
                 navigate('/site');
             } else {
                 // Handle login error
