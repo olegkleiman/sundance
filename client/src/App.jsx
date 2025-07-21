@@ -8,7 +8,7 @@ const App = (props) => {
     return (
         <Routes>
             <Route path='/' element={<SignIn />} />
-            <Route path="*" element={
+            <Route path="/site" element={
                 <ProtectedRoute>
                     <Site />
                 </ProtectedRoute>

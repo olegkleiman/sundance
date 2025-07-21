@@ -12,7 +12,7 @@ const Site = () => {
         <Container>
             <Row>
                 <Col>
-                    <div>Welcom to SunDance</div>
+                    <div>Welcome to SunDance</div>
                 </Col>
             </Row>
         </Container>

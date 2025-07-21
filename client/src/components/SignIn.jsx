@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 const SignIn = () => {
     const navigate = useNavigate();
-    const [phoneNumber, setPhoneNumber] = useState('313069486');
+    const [phoneNumber, setPhoneNumber] = useState('0543307026');
     const [otp, setOtp] = useState('');   
     const [phoneTouched, setPhoneTouched] = useState(false);
     const [otpTouched, setOtpTouched] = useState(false);
@@ -15,7 +15,7 @@ const SignIn = () => {
         setOtpTouched(true);
         let hasError = false;
         if (!phoneNumber.trim()) {
-            setPhoneError('User Name is required');
+            setPhoneError('Phone Number is required');
             hasError = true;
         } else {
             setPhoneError('');
@@ -42,7 +42,7 @@ const SignIn = () => {
             if (response.ok) {
                 // Handle successful login: redirect to Site
                 console.log('Login successful', data);
-                navigate('/site'); // or navigate('*') if that's your catch-all route
+                navigate('/site');
             } else {
                 // Handle login error
                 console.error('Login failed', data);
@@ -58,7 +58,7 @@ const SignIn = () => {
     return (
         <div className="signin-container">
             <div className="signin-title">SunDance</div>
-            <label htmlFor="phoneNumber" className="signin-label">User Name: <span style={{color: 'red'}}>*</span></label>
+            <label htmlFor="phoneNumber" className="signin-label">Phone Number: <span style={{color: 'red'}}>*</span></label>
             <input
                 id="phoneNumber"
                 className={`signin-input${phoneTouched && !phoneNumber.trim() ? ' signin-input-error' : ''}`}
@@ -73,7 +73,7 @@ const SignIn = () => {
                 aria-invalid={phoneTouched && !phoneNumber.trim()}
             />
             {phoneTouched && !phoneNumber.trim() && (
-                <div style={{ color: 'red', fontSize: '0.95em', marginBottom: 10 }}>{phoneError || 'User Name is required'}</div>
+                <div style={{ color: 'red', fontSize: '0.95em', marginBottom: 10 }}>{phoneError || 'Phone Number is required'}</div>
             )}
             <label htmlFor="otp" className="signin-label">OTP: <span style={{color: 'red'}}>*</span></label>
             <input
