@@ -44,7 +44,7 @@ const SignIn = () => {
             if (response.ok) {
                 // Handle successful login: set auth and redirect to Site
                 console.log('Login successful', data);
-                login();
+                login(data.access_token);
                 navigate('/site');
             } else {
                 // Handle login error
