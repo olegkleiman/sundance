@@ -1,9 +1,17 @@
 const path = require('path');
-const { env } = require('process');
 const webpack = require('webpack');
-const dotenv = require('dotenv').config({
-    path: path.join(__dirname, '.env')
-})
+
+// Load environment variables from .env file
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+
+// Create a new object with only the environment variables we want to expose
+const envVars = {
+    'process.env': {
+        NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'development'),
+        REACT_APP_API_BASE_URL: JSON.stringify(process.env.REACT_APP_API_BASE_URL || 'http://localhost:8099'),
+        REACT_APP_CLIENT_PORT: JSON.stringify(process.env.REACT_APP_CLIENT_PORT || '5001')
+    }
+};
 
 module.exports = {
 
@@ -34,5 +42,8 @@ module.exports = {
         // disableHostCheck: true,
         // port: 5601
     },
-    devtool: 'source-map'
+    devtool: 'source-map',
+    plugins: [
+        new webpack.DefinePlugin(envVars)
+    ]
 }

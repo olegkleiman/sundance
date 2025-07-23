@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Routes, Route, useMatch, useNavigate } from 'react-router-dom';
 import { Button } from "react-bootstrap";   
 import AudioEngine from "../audioEngine.js";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/AuthContext.jsx";
 
 const Site = () => {
 
@@ -46,8 +46,9 @@ const Site = () => {
 
             const access_token = getToken();
 
-            const response = await fetch('http://localhost:8099/init', {
+            const response = await fetch('/init', {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
                   'Content-Type': 'application/json',
                   'Authorization': `Bearer ${access_token}`
@@ -68,7 +69,7 @@ const Site = () => {
             setHasRecognitionResult(false);
         }
 
-        console.log('Fetching from Sundace server');
+        console.log('Fetching from Sundance server');
 
         fetchData();    
 
@@ -78,10 +79,14 @@ const Site = () => {
 
         let position = window.innerWidth;
 
-        const eventSource = new EventSource("http://localhost:8099/completion");
+        const eventSource = new EventSource("/completion", {
+            withCredentials: true
+        });
+        
         eventSource.onmessage = (event) => {
             setContent(content + event.data);
         };
+        
         eventSource.addEventListener('end', () => {
             eventSource.close();
         });

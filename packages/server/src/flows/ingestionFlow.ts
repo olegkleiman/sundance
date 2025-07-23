@@ -33,21 +33,33 @@ function sleep(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const embedding_model = process.env.EMBEDDING_MODEL;
+let openaiClient: OpenAI | null = null;
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
+function getOpenAIClient(): OpenAI {
+    if (openaiClient) {
+        return openaiClient;
+    }
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+        throw new Error('The OPENAI_API_KEY environment variable is missing or empty.');
+    }
+    openaiClient = new OpenAI({ apiKey });
+    return openaiClient;
+}
 
 const MAX_CHUNK_LENGTH = parseInt(process.env.MAX_CHUNK_LENGTH || "200");
-const tenantId = process.env.TENANT_ID;
-const cosmosContainer = await getVectorContainer();
 
 // Accepts an array of texts and returns an array of embeddings
 export async function embedTexts(texts: string[]): Promise<number[][]> {
+
+    const embedding_model = process.env.EMBEDDING_MODEL;
+    if( !embedding_model ) {
+        throw new Error('EMBEDDING_MODEL is not defined in environment variables.');
+    }
+
     try {
-        const response = await openai.embeddings.create({
-            model: embedding_model ?? 'text-embedding-ada-002',
+        const response = await getOpenAIClient().embeddings.create({
+            model: embedding_model,
             input: texts,
         });
         return response.data.map(item => item.embedding);
@@ -62,11 +74,15 @@ export async function embedTexts(texts: string[]): Promise<number[][]> {
 // See VectorDistance documentation for more information: https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/query/vectordistance
 export async function embedText(text: string): Promise<number[]> {
     
-    try {
+    const embedding_model = process.env.EMBEDDING_MODEL;
+    if( !embedding_model ) {
+        throw new Error('EMBEDDING_MODEL is not defined in environment variables.');
+    }
 
-        const _embedding = await openai.embeddings.create({
-          model: embedding_model ?? 'text-embedding-ada-002',
-          input: text,
+    try {
+        const _embedding = await getOpenAIClient().embeddings.create({
+            model: embedding_model,
+            input: text,
         });
 
         return _embedding.data[0].embedding;
@@ -77,26 +93,13 @@ export async function embedText(text: string): Promise<number[]> {
     }
 }
 
-const embedAndUpsert = async (text: string, url: string) => {
-    const embedding = await embedText(text);
-    const item = {
-        id: randomUUID(),
-        embedding: embedding,
-        TenantId: tenantId,
-        payload: {
-            text: text,
-            url: url
-        }
-    }
-    const cosmosItem = await cosmosContainer.items.upsert(item);
-    logger.debug(`Upserted item: ${cosmosItem.item.id}`);
-}
-
 export const IngestionFlow = ai.defineFlow({
     name: "ingestionFlow",
     inputSchema: z.string().describe("sitemap file path or URL"),
 },
 async (contentMapUrl: string) => {
+
+    const cosmosContainer = await getVectorContainer();
 
     let xmlContent: string = "";
 
@@ -118,6 +121,7 @@ async (contentMapUrl: string) => {
     const parser = new XMLParser();
     const json = parser.parse(xmlContent);
 
+    const tenantId = process.env.TENANT_ID;
     if( !tenantId ) {
         throw new Error('TENANT_ID is not defined in environment variables.');
     }

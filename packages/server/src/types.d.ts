@@ -1,4 +1,6 @@
 import 'express-session'
+// src/types/express.d.ts
+import { Request } from 'express';
 
 declare module 'express-session' {
     interface SessionData {
@@ -16,6 +18,18 @@ type CustomJwtPayload = {
 declare module 'express-serve-static-core' {
     interface Request {
       citizenId?: string;
+      headers: {
+        authorization?: string;
+        [key: string]: string | string[] | undefined;
+      };
       access_token?: string;
     }
+}
+
+declare module 'express-serve-static-core' {
+  interface Request {
+    cookies: {
+      [key: string]: string | undefined;
+    };
+  }
 }

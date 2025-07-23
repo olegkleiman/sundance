@@ -1,10 +1,11 @@
 {
-    "name": "site",
+    "name": "client",
     "version": "1.0.0",
-    "main": "index.js",
+    "private": true,
+    "main": "src/index.ts",
     "license": "MIT",
     "scripts": {
-        "start": "webpack serve --port 5001 --mode=development",
+        "dev": "webpack serve --port 5001 --mode=development",
         "compile": "webpack --mode=development"
     },
     "dependencies": {

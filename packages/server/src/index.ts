@@ -1,31 +1,75 @@
 // 
 // index.ts
-// Sundance project
+// Sundance project, server part
 //
 // Created by: Oleg Kleiman on 14/07/2025
 // 
 
-import express, { Request, Response, NextFunction } from 'express';
-import swaggerJsdoc from 'swagger-jsdoc';
-import swaggerUi from 'swagger-ui-express';
-import session from 'express-session'
-import cors from 'cors';
-
+// Load environment variables first, before any other imports
+import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Try multiple possible locations for .env file
+const possibleEnvPaths = [
+    path.resolve(__dirname, '../../.env'),  // From server/src
+    path.resolve(__dirname, '../.env'),     // From server/
+    path.resolve(process.cwd(), '.env')      // From project root
+];
+
+let envPath = '';
+for (const envPathOption of possibleEnvPaths) {
+    if (fs.existsSync(envPathOption)) {
+        envPath = envPathOption;
+        break;
+    }
+}
+
+if (!envPath) {
+    console.error('Error: No .env file found in any of these locations:', possibleEnvPaths);
+    process.exit(1);
+}
+
+console.log('Loading .env from:', envPath);
+console.log('File contents:', fs.readFileSync(envPath, 'utf-8'));
+
+// Load environment variables
+const envConfig = dotenv.parse(fs.readFileSync(envPath));
+for (const k in envConfig) {
+    process.env[k] = envConfig[k];
+}
+
+// Verify environment variables are loaded
+const requiredVars = ['CLIENT_ID', 'LOGIN_SCOPE', 'LOGIN_DEVICE_ID'];
+const missingVars = requiredVars.filter(varName => !process.env[varName]);
+
+if (missingVars.length > 0) {
+    console.error(`Error: Missing required environment variables: ${missingVars.join(', ')}`);
+    process.exit(1);
+}
+
+console.log('Environment variables loaded successfully:', {
+    NODE_ENV: process.env.NODE_ENV || 'development',
+    CLIENT_ID: '***',
+    LOGIN_SCOPE: '***',
+    LOGIN_DEVICE_ID: '***',
+    SESSION_SECRET: process.env.SESSION_SECRET ? '***' : 'Not set',
+});
+
+import express, { NextFunction, Request, Response, Application } from 'express';
+import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
+import session from 'express-session';
+import cors from 'cors';
 import { logger } from 'genkit/logging';
 import { jwtDecode } from "jwt-decode";
 import cookieParser from 'cookie-parser';
 
-import dotenv from 'dotenv';
-dotenv.config();
-
-import { ai } from './genkit.js' //'./genkit.ts';
-import { ToolsFlow } from './tools_flow.js';
-import { toolDefinitions, toolDescriptions } from './mcpClient.js';
-import { SearchFlow } from './flows/searchFlow.js';
+import { ai } from './genkit.js'
 import { CompletionFlow } from './flows/completionFlow.js';
 import { IngestionFlow } from './flows/ingestionFlow.js';
 import { hybridRetriever } from './retrievers/hybridRetriever.js';
@@ -37,6 +81,18 @@ app.use(express.json());
 app.use(cors());
 app.use(cookieParser());
 
+// Debug middleware to log env vars on each request
+app.use((req, res, next) => {
+    console.log('Request received at:', new Date().toISOString());
+    console.log('Environment variables in request middleware:', {
+        NODE_ENV: process.env.NODE_ENV,
+        CLIENT_ID: process.env.CLIENT_ID ? '***' : 'Not set',
+        LOGIN_SCOPE: process.env.LOGIN_SCOPE ? '***' : 'Not set',
+        LOGIN_DEVICE_ID: process.env.LOGIN_DEVICE_ID ? '***' : 'Not set',
+    });
+    next();
+});
+
 const isProduction = process.env.NODE_ENV === 'production';
 
 app.use(session({
@@ -45,7 +101,6 @@ app.use(session({
     secret: process.env.SESSION_SECRET || 'secret',
     cookie: { secure: isProduction }
 }))
-
 
 const swaggerOptions = {
     definition: {
@@ -77,7 +132,7 @@ const swaggerOptions = {
       },
     },
     apis: ['./src/**/*.ts', './index.ts'], // Include all TypeScript files
-  };
+};
 
 const specs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
@@ -86,8 +141,9 @@ export async function authenticateToken(req: Request, res: Response, next: NextF
 
     let access_token = req.cookies["access_token"];
     if (!access_token) {
-        const headers = req.headers;
-        access_token = headers?.authorization?.split(' ')[1];
+        const authHeader = (req as any).get?.('authorization') || req.headers.authorization;
+        const token = Array.isArray(authHeader) ? authHeader[0] : authHeader;
+        access_token = token?.split(' ')[1];
     }
     if (!access_token) {
         throw new Error('Authorization token not found.');
@@ -123,8 +179,12 @@ export async function authenticateToken(req: Request, res: Response, next: NextF
 
     const decodedJwt = jwtDecode(access_token);
     tokenCache.set(access_token, { payload: decodedJwt, timestamp: Date.now() });
-    if( 'signInNames.citizenId' in decodedJwt )
-        req.citizenId = decodedJwt['signInNames.citizenId'];
+    if ('signInNames.citizenId' in decodedJwt) {
+        const citizenId = decodedJwt['signInNames.citizenId'];
+        if (typeof citizenId === 'string') {
+            req.citizenId = citizenId;
+        }
+    }
 
     next()
 };
@@ -171,15 +231,17 @@ app.post('/init', authenticateToken, async (req, res) => {
 const tokenCache = new Map<string, { payload: any; timestamp: number }>();
 const TOKEN_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-const API_KEY = process.env.API_KEY;
-if( !API_KEY ) {
-    throw new Error('API_KEY is not defined in environment variables.');
-}
 
 // Middleware to check API key
 const authenticateKey = (req: Request, res: Response, next: NextFunction) => {
-    const key = req.header('x-api-key');
-    if (key === API_KEY) {
+
+  const API_KEY = process.env.API_KEY;
+  if( !API_KEY ) {
+      throw new Error('API_KEY is not defined in environment variables.');
+  }
+  
+  const key = req.headers['x-api-key'];
+  if (key === API_KEY) {
       next();
     } else {
       res.status(401).json({ error: 'Unauthorized: Invalid API Key' });
@@ -219,10 +281,6 @@ app.post('/ingest', authenticateKey, async (req, res) => {
     await IngestionFlow(url);
     
     return res.status(202).send();
-})
-
-app.get('/tools', async (req, res) => {
-    return res.status(200).send(toolDefinitions);
 })
 
 app.post('/login', async (req, res) => {

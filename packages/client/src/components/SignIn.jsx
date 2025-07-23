@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+import config from '../config/config';
 import { useAuth } from '../context/AuthContext';
 
 const SignIn = () => {
@@ -30,8 +32,9 @@ const SignIn = () => {
         }
         if (hasError) return;
         try {
-            const response = await fetch('http://localhost:8099/login', {
+            const response = await fetch(config.ENDPOINTS.LOGIN, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                 },
