@@ -18,8 +18,9 @@ Sundance is a pluggable, privacy-respecting AI chatbox that integrates:
 
 ### 1. Frontend  (Client)
 
-* Served as index.html with vanila JS (no React or frameworks)
-* Prompts for microphone, camera, geolocation permissions on load.
+* Served as React SPA on index.html.
+* After the login that implemented in SignIn component, the user is redirected to the chat page.
+* Chat Page prompts for microphone, camera, geolocation permissions on load.
 * Present the microphone icon that starts the Voice Recognition with browser build-in [speech recognition API](https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition).
 * The recognition begins when the end-user clicks on the microphone icon.
 * The recognition ends when the API decides that the end-user stopped speaking.
@@ -319,8 +320,12 @@ INGESTION_BATCH_SIZE=10
 ```
 
 ## How to build
-1. Run `npm install` to install dependencies
-3. Run `npm run start` to start the server 
+From VS Studio Code:
+
+1. From the project root directory run `npm install` to install dependencies.
+2. From the project root directory run `npm run client:deploy` to compile the client application and copy the bundle.js and other assets into the service's public directory.
+3. Run `npm run server:start` to start the server, or press F5 to start the debugger.
+4. Open the browser and navigate to `http://localhost:8099` to see the client application (index.html).
 
 ## Deployment
 This is Node.js application. It can be deployed to any server that supports Node.js, including MS Azure.
@@ -358,32 +363,54 @@ Connection string to the DB is defined in the .env file.
 This project uses OpenAI 'text-embedding-3-small' model for text embeddings.
 
 
-## File Structure 
+## File Structure
+
 sundance/
+├── packages/
+│   ├── client/
+│   │   ├── public/
+│   │   │   ├── index.html
+│   │   │   ├── index.css
+│   │   ├── src/
+│   │   │   ├── /components
+│   │   │   │   ├── /SignIn.jsx
+│   │   │   │   ├── /ProtectedRoute.jsx
+│   │   │   │   ├── /Chat.jsx
+│   │   │   |── /context
+│   │   │   |── /config
+│   │   │   |── /utils
+│   │   │   ├── App.tsx
+│   │   │   ├── index.js
+│   │   │   └── .babelrc
+│   │   │.env
+│   │   └── package.json
+│   │   └── tsconfig.json
+│   └── server/
+      ├── llm_prompts/
+        │   ├── graphql_agent.prompt
+      │   └── schema.graphql
+      ├── /src
+│       │   ├── index.ts
+│       │   ├── genkit.js
+│       │   |── /cosmosDB
+│       │   │   ├── utils.ts
+│       │   ├── /flows
+│       │   │   ├── completionFlow.ts
+│       │   │   ├── ingestionFlow.ts
+│       │   │   └── searchFlow.ts
+│       │   ├── /retrievers
+│       │   │   └── hybridRetriever.ts
+│       │   ├── /tools
+│       │   │   └── executeGraphQL.ts
+│       │   ── .env
+│       │── package-lock.json
+│       │── package.json
+│       │── tsconfig.json
 ├── .gitignore
+├── package-lock.json
+├── package.json
 ├── .vscode/
 │   ├── launch.json
 │   └── tasks.json
-├── llm_prompts/
-│   ├── graphql_agent.prompt
-│   └── schema.graphql
-├── src/
-│   ├── cosmosDB/
-│   │   ├── utils.ts
-│   ├── flows/
-│   │   └── completionFlow.ts
-    │   ├── ingestionFlow.ts
-│   │   └── searchFlow.ts
-├── retrievers/
-│   ├── hybridRetriever.ts
-├── tools/
-│   ├── executeGraphQL.ts
-├── public/
-│   └── index.html
-├── .env
-├── genkit.ts
-├── index.ts
-├── package-lock.json
-├── package.json
 └── README.md
 

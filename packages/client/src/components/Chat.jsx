@@ -4,7 +4,7 @@ import { Button } from "react-bootstrap";
 import AudioEngine from "../audioEngine.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
-const Site = () => {
+const Chat = () => {
 
     const [state, setState] = useState('What can I help you with?');
     const [hasRecognitionResult, setHasRecognitionResult] = useState(false);
@@ -124,4 +124,4 @@ const Site = () => {
     </>);
 };
 
-export default Site;
+export default Chat;

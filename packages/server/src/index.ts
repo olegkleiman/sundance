@@ -80,19 +80,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.use(express.json());
 app.use(cors());
 app.use(cookieParser());
-
-// Debug middleware to log env vars on each request
-app.use((req, res, next) => {
-    console.log('Request received at:', new Date().toISOString());
-    console.log('Environment variables in request middleware:', {
-        NODE_ENV: process.env.NODE_ENV,
-        CLIENT_ID: process.env.CLIENT_ID ? '***' : 'Not set',
-        LOGIN_SCOPE: process.env.LOGIN_SCOPE ? '***' : 'Not set',
-        LOGIN_DEVICE_ID: process.env.LOGIN_DEVICE_ID ? '***' : 'Not set',
-    });
-    next();
-});
-
+  
 const isProduction = process.env.NODE_ENV === 'production';
 
 app.use(session({
