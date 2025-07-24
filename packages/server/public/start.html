@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="he-IL">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />        
+  <meta charset="UTF-8" />
+
+  <title>Sundance Chat</title>
+
+  <link rel="stylesheet" href="./landing.css">
+
+  <script src="https://unpkg.com/@dotlottie/player-component@2.7.12/dist/dotlottie-player.mjs" type="module"></script>
+  <script src="./scripts/audioEngine.js"></script>
+
+</head>
+<body>
+  <img src="https://www.tel-aviv.gov.il/_layouts/15/TlvSP2013PublicSite/images/header/logoTlv.svg" alt="App Logo" class="app-logo">
+  <button id="login-btn" class="login-button">שלום אולג קליימן</button>
+
+  <div class="container">
+    <div class="button-wrapper" style="display: flex; flex-direction: column; align-items: center;">
+      <div id="caption" class="caption">לחץ כדי לגלות במה אוכל לעזור</div>
+      <button id="startBtn" class="start-button circle-btn" aria-label="Start Speaking" style="padding: 0; border: none; background: white; width: 100%; height: 100%;">
+        <svg 
+            class="mic-icon"
+            xmlns="http://www.w3.org/2000/svg" 
+            viewBox="0 0 24 24"
+            fill="none"
+        >
+            <path 
+                d="M12 14C13.66 14 15 12.66 15 11V5C15 3.34 13.66 2 12 2C10.34 2 9 3.34 9 5V11C9 12.66 10.34 14 12 14Z" 
+                fill="#4285F4"
+            />
+            <path 
+                d="M17 11C17 13.76 14.76 16 12 16C9.24 16 7 13.76 7 11H5C5 14.53 7.61 17.43 11 17.92V22H13V17.92C16.39 17.43 19 14.53 19 11H17Z" 
+                fill="#34A853"
+            />
+            <path 
+                d="M12 16C14.76 16 17 13.76 17 11H19C19 14.53 16.39 17.43 13 17.92V22H11V17.92C7.61 17.43 5 14.53 5 11H7C7 13.76 9.24 16 12 16Z" 
+                fill="#FBBC05"
+            />
+        </svg>
+    </button>
+    <div class="state-container">
+      <div id="state_lbl"></div>
+    </div>
+    <div>
+        <!-- <button id="stopBtn" class="stop-button" aria-label="Stop">
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            width="48" 
+            height="48" 
+            viewBox="0 0 48 48" 
+            fill="none">
+            <rect x="12" y="12" width="24" height="24" rx="6" fill="#fff"/>
+          </svg>
+        </button> -->
+      </div>
+    </div>
+  </div>
+      </div>
+    <div id="ticker-container">
+      <div id="ticker">התשובות תופענה כאן</div>
+    </div>
+
+  <script>
+
+    async function getAccessToken() {
+    
+      const loginRequest = {
+        phoneNumber: "0543307026",
+        otp: "777"
+      }
+
+      let loginResponse = await fetch('./login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },        
+        body: JSON.stringify(loginRequest)
+      })
+      if( !loginResponse.ok ) {
+        const loginBtn = document.getElementById('login-btn');
+        loginBtn.textContent = "התחברות נכשלה";
+      }
+
+      const loginData = await loginResponse.json();
+      return loginData.access_token;
+    }
+
+    function recogniztion_started() {
+      caption.textContent = "אני מקשיבה...";
+    }
+
+    function recognition_ended() {
+      
+      caption.textContent = "לחץ כדי לגלות במה אוכל לעזור";
+    }
+
+    const recornition_result = async (transcript) => {
+        
+        ticker.textContent = ""
+        
+        state.textContent = transcript;
+        caption.textContent = "אני חושבת...";
+
+        const access_token = await getAccessToken();
+
+        startConversationTurn(transcript, access_token);
+        completeConversation()
+
+        startBtn.classList.remove('pulse');
+    }
+
+    async function startConversationTurn(transcript, access_token) {
+
+      const response = await fetch('/init', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${access_token}`
+        },
+        body: JSON.stringify({
+          data: transcript
+        })
+      });
+      if (!response.ok) {
+        throw new Error('Failed to initialize conversation');
+      }
+    }
+    
+    function completeConversation() { 
+
+      let position = window.innerWidth;
+      let content = '';
+
+      const eventSource = new EventSource("./completion");
+      eventSource.onmessage = (event) => {
+        content += event.data;
+        ticker.textContent = content;
+      };
+      eventSource.addEventListener('end', () => {
+        eventSource.close();
+        ticker.textContent = content;
+      });
+
+      function animate() {
+          position -= 1; // speed (px/frame)
+          ticker.style.left = position + 'px';
+
+          // Reset position when completely out of view
+          if (ticker.getBoundingClientRect().right < 0) {
+              position = window.innerWidth;
+          }
+
+          requestAnimationFrame(animate);
+      }      
+
+      animate()
+    }
+
+    const audioEngine = new AudioEngine('he-IL', recogniztion_started, recognition_ended, recornition_result);
+
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const player = document.getElementById("lottiePlayer");
+    const state = document.getElementById("state_lbl");
+    const caption = document.getElementById('caption');
+
+    // Glow effect will be added only when Start is pressed
+    
+    startBtn.addEventListener('click', () => {
+      startBtn.classList.add('pulse');
+      // stopBtn.style.display = 'inline-block';
+      // stopBtn.classList.add('pulse');
+      // startBtn.style.display = 'none';
+      // startBtn.classList.remove('pulse');
+      audioEngine.startRecognition()
+    });
+
+    stopBtn.addEventListener('click', () => {
+      stopBtn.style.display = 'none';
+      stopBtn.classList.remove('pulse');
+    });
+  </script>
+</body>
+</html>

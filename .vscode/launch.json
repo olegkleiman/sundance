@@ -6,7 +6,7 @@
       "request": "launch",
       "name": "Debug TypeScript",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["tsx", "src/index.ts"],
+      "runtimeArgs": ["tsx", "packages/server/src/index.ts"],
       "cwd": "${workspaceFolder}",
       "skipFiles": ["<node_internals>/**",
                     "node_modules/**"],

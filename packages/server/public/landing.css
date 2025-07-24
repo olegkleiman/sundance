@@ -1,0 +1,149 @@
+body {
+    margin: 0;
+    font-family: sans-serif;
+    background: #f0f0f0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.start-button {
+    padding: 30px 60px;
+    font-size: 24px;
+    border-radius: 50px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+  }
+
+  .start-button.animate {
+    transform: scale(1.2);
+  }
+
+  #ticker-container {
+    text-align: right;
+    margin-bottom: 300px;
+    width: 100%;
+  }
+  
+  #ticker {
+    display: inline-block;
+    font-family: 'Assistant','Heebo','Rubik', 'Noto Sans Hebrew', Arial, sans-serif;
+    font-size: 1.5rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    margin-right: 20px;
+  }
+
+.app-logo {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  width: 104px;
+  height: 104px;
+  z-index: 10;
+  border-radius: 12px;
+  box-shadow: 0 2px 16px rgba(70,166,255,0.08);
+  background: #f0f0f0;
+}
+
+.stop-button {
+    margin-top: 20px;
+    font-size: 16px;
+    padding: 10px 20px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: none;
+}
+
+.login-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    padding: 8px 16px;
+    font-size: 14px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.button-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.caption {
+    text-align: center;
+    margin-bottom: 10%; 
+    font-size: 2.5rem; 
+    font-weight: 600; 
+    color: #444; 
+    letter-spacing: 0.02em; 
+    font-family: 'Assistant','Heebo','Rubik', 'Noto Sans Hebrew', Arial, sans-serif;
+    width: 100%; 
+    display: block;
+}
+
+.circle-btn {
+  width: 192px;
+  height: 192px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #46a6ff 0%, #7f53ac 100%);
+  box-shadow: 0 12px 48px 0 rgba(127, 83, 172, 0.22), 0 8px 32px rgba(70, 166, 255, 0.17);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  transition: background 0.4s, box-shadow 0.2s;
+  padding: 0;
+}
+
+.circle-btn.pulse {
+  animation: glow 2s cubic-bezier(0.4,0.2,0.2,1) infinite;
+}
+
+@keyframes glow {
+  0% {
+    box-shadow: 0 12px 48px 0 rgba(127, 83, 172, 0.22), 0 8px 32px rgba(70, 166, 255, 0.17);
+  }
+  50% {
+    box-shadow: 0 0 48px 24px #46a6ff80, 0 0 64px 32px #7f53ac80;
+  }
+  100% {
+    box-shadow: 0 12px 48px 0 rgba(127, 83, 172, 0.22), 0 8px 32px rgba(70, 166, 255, 0.17);
+  }
+}
+
+.circle-btn:active {
+  box-shadow: 0 2px 4px 0 rgba(127, 83, 172, 0.12);
+}
+
+.stop-button {
+  margin-top: 20px;
+  font-size: 16px;
+  padding: 10px 20px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: none;
+}

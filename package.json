@@ -4,34 +4,19 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "build": "tsc",
-    "start": "DEBUG=genkit:* npx tsx src/index.ts"
+    "server:start": "npm run dev --workspace=server",
+    "dev": "concurrently \"npm run dev --workspace=client\" \"npm run dev --workspace=server\"",
+    "client:deploy": "npm run compile --workspace=client && cpy ./packages/client/public/**/* ./packages/server/public/"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "concurrently": "^8.2.0",
+    "cpy-cli": "^5.0.0"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
-  "dependencies": {
-    "@apollo/client": "^3.13.8",
-    "@genkit-ai/dev-local-vectorstore": "^1.14.0",
-    "@genkit-ai/googleai": "^1.14.0",
-    "@genkit-ai/vertexai": "^1.14.0",
-    "@modelcontextprotocol/sdk": "^1.13.2",
-    "dotenv": "^17.0.0",
-    "express": "^5.1.0",
-    "express-session": "^1.18.1",
-    "genkitx-anthropic": "^0.23.1",
-    "graphql": "^16.11.0",
-    "jwt-decode": "^4.0.0",
-    "zod": "^3.25.67"
-  },
-  "devDependencies": {
-    "@modelcontextprotocol/server-everything": "^2025.5.12",
-    "@types/cors": "^2.8.19",
-    "@types/express-session": "^1.18.2",
-    "@types/node": "^24.0.8",
-    "ts-node": "^10.9.2",
-    "tsx": "^4.20.3",
-    "typescript": "^5.8.3"
-  }
+  "description": ""
 }
