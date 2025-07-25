@@ -4,15 +4,21 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Debug TypeScript",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["tsx", "packages/server/src/index.ts"],
+      "name": "Debug Server",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--workspace=server"],
       "cwd": "${workspaceFolder}",
-      "skipFiles": ["<node_internals>/**",
-                    "node_modules/**"],
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ],
       "sourceMaps": true,
-    
       "outFiles": ["${workspaceFolder}/**/*.js"],
+      "env": {
+        "NODE_ENV": "development",
+        "PORT": "8099"
+      },
+      "console": "integratedTerminal"
     }
   ]
 }

@@ -14,5 +14,7 @@ export const ai = genkit({
 })
 
 logger.setLogLevel('debug');
+logger.debug('✅ GenKit initialized');
+
 
 
