@@ -7,60 +7,18 @@
 
 // Load environment variables first, before any other imports
 import dotenv from 'dotenv';
+dotenv.config();
 import path from 'path';
 import { fileURLToPath } from 'url';
-import fs from 'fs';
+import { createClient, RedisClientType } from 'redis';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Try multiple possible locations for .env file
-const possibleEnvPaths = [
-    path.resolve(__dirname, '../../.env'),  // From server/src
-    path.resolve(__dirname, '../.env'),     // From server/
-    path.resolve(process.cwd(), '.env')      // From project root
-];
+const envPath = path.resolve(__dirname, '../.env')
+dotenv.config({ path: envPath });
 
-let envPath = '';
-for (const envPathOption of possibleEnvPaths) {
-    if (fs.existsSync(envPathOption)) {
-        envPath = envPathOption;
-        break;
-    }
-}
-
-if (!envPath) {
-    console.error('Error: No .env file found in any of these locations:', possibleEnvPaths);
-    process.exit(1);
-}
-
-console.log('Loading .env from:', envPath);
-console.log('File contents:', fs.readFileSync(envPath, 'utf-8'));
-
-// Load environment variables
-const envConfig = dotenv.parse(fs.readFileSync(envPath));
-for (const k in envConfig) {
-    process.env[k] = envConfig[k];
-}
-
-// Verify environment variables are loaded
-const requiredVars = ['CLIENT_ID', 'LOGIN_SCOPE', 'LOGIN_DEVICE_ID'];
-const missingVars = requiredVars.filter(varName => !process.env[varName]);
-
-if (missingVars.length > 0) {
-    console.error(`Error: Missing required environment variables: ${missingVars.join(', ')}`);
-    process.exit(1);
-}
-
-console.log('Environment variables loaded successfully:', {
-    NODE_ENV: process.env.NODE_ENV || 'development',
-    CLIENT_ID: '***',
-    LOGIN_SCOPE: '***',
-    LOGIN_DEVICE_ID: '***',
-    SESSION_SECRET: process.env.SESSION_SECRET ? '***' : 'Not set',
-});
-
-import express, { NextFunction, Request, Response, Application } from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import session from 'express-session';
@@ -73,6 +31,57 @@ import { ai } from './genkit.js'
 import { CompletionFlow } from './flows/completionFlow.js';
 import { IngestionFlow } from './flows/ingestionFlow.js';
 import { hybridRetriever } from './retrievers/hybridRetriever.js';
+
+const redisConnectionKey = process.env.REDIS_CONNECTION_KEY;
+if( !redisConnectionKey ) {
+    throw new Error('REDIS_CONNECTION_KEY is not defined in environment variables.');
+}
+
+const redisHost = process.env.REDIS_HOST_NAME;
+if( !redisHost ) {
+    throw new Error('REDIS_HOST_NAME is not defined in environment variables.');
+}
+
+const redisPort = process.env.REDIS_PORT;
+if( !redisPort ) {
+    throw new Error('REDIS_PORT is not defined in environment variables.');
+}
+
+// Initialize Redis client
+const redisClient: RedisClientType = createClient({
+    url: `redis://:${redisConnectionKey}@${redisHost}:${redisPort}`,
+    socket: {
+        tls: true,
+        rejectUnauthorized: false
+    }
+});
+
+// Handle Redis connection events
+redisClient.on('error', (err) => {
+    logger.error('Redis Client Error:', err);
+});
+
+redisClient.on('connect', () => {
+    logger.info('Redis client connected');
+});
+
+redisClient.on('reconnecting', () => {
+    logger.info('Redis client reconnecting...');
+});
+
+// Connect to Redis when the server starts
+async function initializeRedis() {
+    try {
+        await redisClient.connect();
+        logger.info('Successfully connected to Redis');
+    } catch (error) {
+        logger.error('Failed to connect to Redis:', error);
+        process.exit(1);
+    }
+}
+
+// Initialize Redis connection
+initializeRedis();
 
 const app = express();
 
@@ -271,6 +280,77 @@ app.post('/ingest', authenticateKey, async (req, res) => {
     return res.status(202).send();
 })
 
+const set_cookie = (res: Response, token: string) => {
+    res.cookie('access_token', token, {
+        httpOnly: true,    // Not accessible from JS
+        secure: true,      // Only sent over HTTPS
+        // sameSite: 'Strict',// Prevent CSRF,
+        maxAge: 0 // 1 hour
+    })
+}
+
+app.get('/refresh_token', async (req: Request, res: Response) => {
+    logger.debug('Session before /refresh_token:', req.session);
+
+    try {
+        // Check if Redis is connected
+        if (!redisClient.isOpen) {
+            await redisClient.connect();
+        }
+        
+        // Test the connection with a simple command
+        await redisClient.ping();
+        logger.info('Redis connection is active');
+
+        const refresh_token = await redisClient.hGet(`sessions:${req.session.id}`, 'refresh_token');
+        
+        const url = process.env.REFRESH_TOKEN_URL;
+        if( !url ) {
+            throw new Error('REFRESH_TOKEN_URL is not defined in environment variables.');
+        }   
+
+        const refreshTokenPayload = {
+            clientId: process.env.CLIENT_ID,
+            refresh_token: refresh_token,
+            scope: process.env.REFRESH_SCOPE,
+            isAnonymousLogin: false
+        };
+
+        const refreshTokenResponse = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(refreshTokenPayload)
+        });
+        if( !refreshTokenResponse.ok ) {
+            throw new Error('Failed to refresh token');
+        }
+
+        const refreshTokenData = await refreshTokenResponse.json();
+        set_cookie(res, refreshTokenData.id_token)
+
+        await redisClient.hSet(`sessions:${req.session.id}`, 
+            {
+                refresh_token: refreshTokenData.refresh_token,
+                access_token: refreshTokenData.id_token,
+            });
+        
+        return res.json({
+            access_token: refreshTokenData.id_token
+        })
+
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        logger.error('Error with Redis connection:', error);
+        return res.status(500).json({ 
+            status: 'error', 
+            message: 'Failed to connect to Redis',
+            error: errorMessage
+        });
+    }
+})
+
 app.post('/login', async (req, res) => {
     
     const otp = req.body.otp;
@@ -316,12 +396,13 @@ app.post('/login', async (req, res) => {
       }
 
       const loginData = await login_response.json();
-      res.cookie('access_token', loginData.access_token, {
-        httpOnly: true,    // Not accessible from JS
-        secure: true,      // Only sent over HTTPS
-        // sameSite: 'Strict',// Prevent CSRF,
-        maxAge: 60 * 60 * 1000 // 1 hour
-      })
+      set_cookie(res, loginData.id_token)
+
+      await redisClient.hSet(`sessions:${req.session.id}`, 
+        {
+            refresh_token: loginData.refresh_token,
+            access_token: loginData.access_token,
+        });
 
       return res.json({
         access_token: loginData.access_token

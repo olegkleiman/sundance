@@ -317,7 +317,13 @@ GRAPHQL_URL=http://localhost:8080
 PORT=8099
 API_KEY=
 INGESTION_BATCH_SIZE=10
+
+# Redis
+REDIS_CONNECTION_KEY=
+REDIS_HOST_NAME=sundance.redis.cache.windows.net
+REDIS_PORT=6389
 ```
+
 
 ## How to build
 From VS Studio Code:
