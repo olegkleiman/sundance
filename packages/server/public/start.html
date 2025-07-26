@@ -74,7 +74,7 @@
         otp: "777"
       }
 
-      let loginResponse = await fetch('./login', {
+      let loginResponse = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

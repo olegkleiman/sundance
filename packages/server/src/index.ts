@@ -41,7 +41,7 @@ const server = app.listen(PORT, () => {
     host = `${hostname}:${address.port}`;
   }
   
-  console.info(`✅ Sundance Server is listening on http://${host}`);
+  console.info(`✅ Sundance Server is running at \x1b[4;34m\x1b]8;;http://${host}:${PORT}\x1b\\http://localhost:${PORT}\x1b]8;;\x1b\\\x1b[0m`);
 });
 
 export default app;
