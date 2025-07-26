@@ -3,6 +3,7 @@ import { Routes, Route, useMatch, useNavigate } from 'react-router-dom';
 import { Button } from "react-bootstrap";   
 import AudioEngine from "../audioEngine.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import config from '../config/config';
 
 import './Chat.css';
 
@@ -48,7 +49,7 @@ const Chat = () => {
 
             const access_token = getToken();
 
-            const response = await fetch('/init', {
+            const response = await fetch(config.ENDPOINTS.INIT, {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
@@ -81,7 +82,7 @@ const Chat = () => {
 
         let position = window.innerWidth;
 
-        const eventSource = new EventSource("/completion", {
+        const eventSource = new EventSource(config.ENDPOINTS.COMPLETION, {
             withCredentials: true
         });
         

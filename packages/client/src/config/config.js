@@ -17,10 +17,10 @@ const config = {
     // API Endpoints (constructed from base URL)
     get ENDPOINTS() {
         return {
-            LOGIN: `${this.API_BASE_URL}/login`,
-            INIT: `${this.API_BASE_URL}/init`,
-            COMPLETION: `${this.API_BASE_URL}/completion`,
-            INGEST: `${this.API_BASE_URL}/ingest`,
+            LOGIN: `${this.API_BASE_URL}/api/auth/login`,
+            INIT: `${this.API_BASE_URL}/api/chat/init`,
+            COMPLETION: `${this.API_BASE_URL}/api/chat/completion`,
+            INGEST: `${this.API_BASE_URL}/api/chat/ingest`,
             HEALTH: `${this.API_BASE_URL}/`,
         };
     },
