@@ -3,11 +3,11 @@ import { Routes, Route, useMatch, useNavigate } from 'react-router-dom';
 import { Button } from "react-bootstrap";   
 import AudioEngine from "../audioEngine.js";
 import { useAuth } from "../context/AuthContext.jsx";
-import config from '../config/config';
+import config from '../config/config.js';
 
-import './Chat.css';
+import './VoiceChat.css';
 
-const Chat = () => {
+const VoiceChat = () => {
 
     const [state, setState] = useState('What can I help you with?');
     const [hasRecognitionResult, setHasRecognitionResult] = useState(false);
@@ -146,4 +146,4 @@ const Chat = () => {
     );
 };
 
-export default Chat;
+export default VoiceChat;

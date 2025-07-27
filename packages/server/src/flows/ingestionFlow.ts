@@ -131,7 +131,7 @@ async (contentMapUrl: string) => {
 
         await sleep(200); // Simple rate limiting
 
-        const content = await fetch(url.loc);
+        const content:Response = await fetch(url.loc);
         if (!content.ok) {
             throw new Error(`Request failed with status ${content.status}`);
         }
