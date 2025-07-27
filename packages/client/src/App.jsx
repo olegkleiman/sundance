@@ -1,7 +1,7 @@
 import React from 'react';
 import { Route, Routes } from 'react-router-dom';
 import SignIn from './components/SignIn';
-import Chat from './components/Chat';
+import VoiceChat from './components/VoiceChat';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const App = (props) => {
@@ -10,7 +10,7 @@ const App = (props) => {
             <Route path='/' element={<SignIn />} />
             <Route path="/site" element={
                 <ProtectedRoute>
-                    <Chat />
+                    <VoiceChat />
                 </ProtectedRoute>
             } />
         </Routes>   
