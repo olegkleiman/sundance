@@ -8,7 +8,7 @@ const App = (props) => {
     return (
         <Routes>
             <Route path='/' element={<SignIn />} />
-            <Route path="/site" element={
+            <Route path="/chat" element={
                 <ProtectedRoute>
                     <VoiceChat />
                 </ProtectedRoute>
