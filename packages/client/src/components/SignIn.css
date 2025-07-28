@@ -1,0 +1,46 @@
+.signin-button {
+    width: 100%;
+    padding: 12px 0;
+    background: linear-gradient(90deg, #6366f1 40%, #14b8a6 100%);
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(20,184,166,0.08);
+    margin-top: 10px;
+    transition: all 0.2s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.signin-button:hover:not(:disabled) {
+    background: linear-gradient(90deg, #6366f1 60%, #14b8a6 100%);
+    transform: translateY(-1px) scale(1.01);
+}
+
+.signin-button:disabled {
+    opacity: 0.8;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Spinner styles */
+.button-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+    margin-left: 8px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}

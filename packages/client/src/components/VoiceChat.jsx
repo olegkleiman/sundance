@@ -1,6 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Routes, Route, useMatch, useNavigate } from 'react-router-dom';
-import { Button } from "react-bootstrap";   
+
+import ChatManager from "./ChatManager.jsx";
+
 import AudioEngine from "../audioEngine.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import config from '../config/config.js';
@@ -40,30 +42,30 @@ const VoiceChat = () => {
             recornition_result);
     }, []); // called once after the initial render 
 
-    const fetchData = async () => {
-        if (!transcript) return;
+    // const fetchData = async () => {
+    //     if (!transcript) return;
 
-        try {
-            const data = await initConversation(transcript);
-            console.log(data);
+    //     try {
+    //         const data = await initConversation(transcript);
+    //         console.log(data);
 
-            completeConversation();
+    //         completeConversation();
 
-            return () => {
-                console.log('cleaning up');
-            }
+    //         return () => {
+    //             console.log('cleaning up');
+    //         }
             
-        } catch (error) {
-            console.error(error);
-        }
+    //     } catch (error) {
+    //         console.error(error);
+    //     }
 
-    }
+    // }
 
-    useEffect( () => { 
+    // useEffect( () => { 
 
-        fetchData();    
+    //     fetchData();    
 
-    }, [transcript])
+    // }, [transcript])
 
     const handleKeyPress = (e) => {
         if (e.key === 'Enter' && utterance.trim()) {
@@ -73,77 +75,9 @@ const VoiceChat = () => {
 
     const handleSendMessage = () => {
         if (!utterance.trim()) return;
-        
-        // const newMessage = {
-        //     id: Date.now(),
-        //     text: utterance,
-        //     sender: 'user',
-        //     timestamp: new Date().toLocaleTimeString()
-        // };
-        
-        // setConversationHistory(prev => [...prev, newMessage]);
-        // setFinishedUtterance(utterance);
+
         setTranscript(utterance);
     };      
-
-    const initConversation = async (transcript) => {
-
-        const access_token = getToken();
-        if (!access_token) {
-            throw new Error('No access token available');
-        }        
-
-        console.log(`Fetching from ${config.ENDPOINTS.INIT}`);
-
-        const response = await fetch(config.ENDPOINTS.INIT, {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${access_token}`
-            },
-            body: JSON.stringify({
-                data: transcript
-            })
-        });
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-        }
-    
-        return await response.json();
-    }
-
-    const completeConversation = async () => { 
-
-        let position = window.innerWidth;
-
-        const eventSource = new EventSource(config.ENDPOINTS.COMPLETION, {
-            withCredentials: true
-        });
-        
-        eventSource.onmessage = (event) => {
-            setContent(content + event.data);
-        };
-        
-        eventSource.addEventListener('end', () => {
-            eventSource.close();
-        });
-
-        function animate() {
-            position -= 1; // speed (px/frame)
-            tickerRef.current.style.left = position + 'px';
-  
-            // Reset position when completely out of view
-            if (tickerRef.current.getBoundingClientRect().right < 0) {
-                position = window.innerWidth;
-            }
-  
-            requestAnimationFrame(animate);
-        }      
-  
-        animate()
-    }
     
     return (
         <div className="chat-container">
@@ -191,6 +125,7 @@ const VoiceChat = () => {
                     aria-label="Send message"
                 />
             </div>
+            <ChatManager lastMessage={transcript}/>
             <div className="ticker-container">
                 <div className="ticker" ref={tickerRef}>{responseContent}</div>
             </div>
