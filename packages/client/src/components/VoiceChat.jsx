@@ -5,7 +5,7 @@ import ChatManager from "./ChatManager.jsx";
 
 import AudioEngine from "../audioEngine.js";
 import { useAuth } from "../context/AuthContext.jsx";
-import config from '../config/config.js';
+
 
 import './VoiceChat.css';
 
