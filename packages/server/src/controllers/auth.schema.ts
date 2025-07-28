@@ -4,9 +4,10 @@ import { z } from 'zod';
 // Login request schema
 export const loginSchema = z.object({
     phoneNumber: z.string()
-      .min(10, "Phone number must be at least 10 characters")
-      .regex(/^(?:\+972|0)(5[0-8]\d{7})$/, "Invalid phone number format"),
+      .min(9, "ID number must be at least 9 characters"),
+      // .regex(/^(?:\+972|0)(5[0-8]\d{7})$/, "Invalid ID number format"),
     otp: z.string()
+      .min(3, "OTP must be at least 3 characters")
       .regex(/^\d{3,6}$/, "OTP must be 3-6 digits")
   });
 

@@ -9,7 +9,6 @@ import './VoiceChat.css';
 
 const VoiceChat = () => {
 
-    const [hasRecognitionResult, setHasRecognitionResult] = useState(false);
     const [content, setContent] = useState('');
     const [responseContent, setResponseContent] = useState('התשובות תופענה כאן');
     const [transcript, setTranscript] = useState('');
@@ -20,6 +19,7 @@ const VoiceChat = () => {
     const { getToken } = useAuth();
 
     const recognitionRef = useRef(null);
+    const tickerRef = useRef(null);
 
     function recogniztion_started() {
     }
@@ -30,55 +30,40 @@ const VoiceChat = () => {
 
     const recornition_result = async (transcript) => {
         setTranscript(transcript);
-        setHasRecognitionResult(true);
+        // setHasRecognitionResult(true);
     }
 
-
-    async function startConversationTurn(transcript, access_token) {
-    }
-
-    useEffect(() => {
+    useEffect( () => {
         recognitionRef.current = new AudioEngine('he-IL', 
             recogniztion_started, 
             recognition_ended, 
             recornition_result);
     }, []); // called once after the initial render 
 
-    useEffect( () => { 
-        
-        async function fetchData() {
+    const fetchData = async () => {
+        if (!transcript) return;
 
-            const access_token = getToken();
+        try {
+            const data = await initConversation(transcript);
+            console.log(data);
 
-            const response = await fetch(config.ENDPOINTS.INIT, {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${access_token}`
-                },
-                body: JSON.stringify({
-                  data: transcript
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-
-            const data = await response.json();
-    
             completeConversation();
 
-            setHasRecognitionResult(false);
+            return () => {
+                console.log('cleaning up');
+            }
+            
+        } catch (error) {
+            console.error(error);
         }
 
-        console.log('Fetching from Sundance server');
+    }
+
+    useEffect( () => { 
 
         fetchData();    
 
-    }, [hasRecognitionResult])
-
+    }, [transcript])
 
     const handleKeyPress = (e) => {
         if (e.key === 'Enter' && utterance.trim()) {
@@ -89,41 +74,47 @@ const VoiceChat = () => {
     const handleSendMessage = () => {
         if (!utterance.trim()) return;
         
-        const newMessage = {
-            id: Date.now(),
-            text: utterance,
-            sender: 'user',
-            timestamp: new Date().toLocaleTimeString()
-        };
+        // const newMessage = {
+        //     id: Date.now(),
+        //     text: utterance,
+        //     sender: 'user',
+        //     timestamp: new Date().toLocaleTimeString()
+        // };
         
-        setConversationHistory(prev => [...prev, newMessage]);
-        setFinishedUtterance(utterance);
-        setUtterance('');
+        // setConversationHistory(prev => [...prev, newMessage]);
+        // setFinishedUtterance(utterance);
+        setTranscript(utterance);
     };      
-          
-    useEffect( async () => {
-        if (finishedUtterance) {
-            console.log("User finished input:", finishedUtterance);
-        } 
-          
-          
+
+    const initConversation = async (transcript) => {
+
         const access_token = getToken();
+        if (!access_token) {
+            throw new Error('No access token available');
+        }        
+
+        console.log(`Fetching from ${config.ENDPOINTS.INIT}`);
 
         const response = await fetch(config.ENDPOINTS.INIT, {
             method: 'POST',
             credentials: 'include',
             headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${access_token}`
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${access_token}`
             },
             body: JSON.stringify({
-              data: transcript
+                data: transcript
             })
-        });        
-    }, [finishedUtterance]);
+        });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        }
+    
+        return await response.json();
+    }
 
-
-    function completeConversation() { 
+    const completeConversation = async () => { 
 
         let position = window.innerWidth;
 
@@ -141,10 +132,10 @@ const VoiceChat = () => {
 
         function animate() {
             position -= 1; // speed (px/frame)
-            ticker.style.left = position + 'px';
+            tickerRef.current.style.left = position + 'px';
   
             // Reset position when completely out of view
-            if (ticker.getBoundingClientRect().right < 0) {
+            if (tickerRef.current.getBoundingClientRect().right < 0) {
                 position = window.innerWidth;
             }
   
@@ -184,35 +175,24 @@ const VoiceChat = () => {
             </button>
 
             <div className="input-container">
-                <div className="input-wrapper">
-                    <input
-                        type="text"
-                        placeholder="איך אני יכולה לעזור לך היום?"
-                        className="utterance-input"
-                        value={utterance}
-                        onChange={(e) => setUtterance(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        style={{ paddingRight: '70px' }}
-                    />
-                    <button 
-                        className="send-button"
-                        onClick={handleSendMessage}
-                        disabled={!utterance.trim()}
-                    >
-                        שלח
-                    </button>
-                </div>
-            </div>
-            <div className="conversation-history">
-                {conversationHistory.map((message) => (
-                    <div key={message.id} className={`message ${message.sender}`}>
-                        <div className="message-content">{message.text}</div>
-                        <div className="message-time">{message.timestamp}</div>
-                    </div>
-                ))}
+                <input
+                    type="text"
+                    id="utterance"
+                    placeholder="איך אפשר לעזור לך?"
+                    className="utterance-input"
+                    value={utterance}
+                    onChange={(e) => setUtterance(e.target.value)}
+                    onKeyUp={handleKeyPress}
+                />
+                <button 
+                    className="sendButtonStyle"
+                    onClick={handleSendMessage}
+                    disabled={!utterance.trim()}
+                    aria-label="Send message"
+                />
             </div>
             <div className="ticker-container">
-                <div className="ticker" id="ticker">{responseContent}</div>
+                <div className="ticker" ref={tickerRef}>{responseContent}</div>
             </div>
         </div>
     );

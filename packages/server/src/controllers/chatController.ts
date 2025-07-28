@@ -104,7 +104,8 @@ export const init = async (req: Request, res: Response) => {
  */
 export const completion = async (req: Request, res: Response) => { 
     
-    const access_token = req.cookies["access_token"];
+    const access_token = 
+    req.cookies["access_token"];
 
     if( !req.session || !req.session.userUtterance ) {
         logger.warn(`SSE request from session (${req.sessionID}) without a prompt.`);
