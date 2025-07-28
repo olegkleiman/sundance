@@ -36,7 +36,7 @@ Sundance is a pluggable, privacy-respecting AI chatbox that integrates:
 
 •	Handles with middleware authentication via JWT.
 
-•	Exposes multiple endpoints:
+•	Exposes multiple endpoints (the full list is available in the [OpenAPI specification (Swagger)](http://<deploy_host>/api-docs/))
 
 *  **/ingest** - Ingests website content for RAG.
 ```javascript
