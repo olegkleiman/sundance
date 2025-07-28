@@ -1,8 +1,11 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { useAuth } from "../context/AuthContext.jsx";
+import config from '../config/config.js';
 
 const ChatManager = ({ lastMessage }) => {
 
-    
+    const { getToken } = useAuth();
+
     const initConversation = async (transcript) => {
 
         const access_token = getToken();
@@ -89,7 +92,6 @@ const ChatManager = ({ lastMessage }) => {
 
     return (
         <div>
-            <h1>ChatManager</h1>
             <div>{lastMessage}</div>
         </div>
     );
