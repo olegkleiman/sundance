@@ -1,5 +1,5 @@
 import { genkit } from 'genkit/beta';
-import { googleAI, gemini25ProExp0325 } from '@genkit-ai/googleai';
+import { googleAI, gemini15Flash } from '@genkit-ai/googleai';
 import { vertexAI } from '@genkit-ai/vertexai';
 import { logger } from 'genkit/logging';
 
@@ -9,7 +9,7 @@ export const ai = genkit({
         vertexAI(),
     ],
     promptDir: './llm_prompts',
-    model: gemini25ProExp0325
+    model: gemini15Flash
     // enableTracingAndMetrics: true
 })
 
