@@ -17,12 +17,14 @@ export const SearchFlow = ai.defineFlow(
     },
     async (input: string) => {
 
+        const topK = parseInt(process.env.SEARCH_TOP_K || '10');    // default to 10
+
         // retrieve relevant documents. Uses kNN internally, then re-rank the retrieved docs
         const docs = await ai.retrieve({
-            retriever: hybridRetriever, //use the custom retriever
+            retriever: hybridRetriever, //use the hybrid retriever
             query: input,
             options: {
-                k: 3,
+                k: topK,
                 preRerankK: 10,
                 customFilter: "words count > 5",
             }

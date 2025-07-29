@@ -1,0 +1,56 @@
+.searchContainer {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.searchTitle {
+    margin-bottom: 16px;
+}
+
+.searchQuery {
+    color: #666;
+    margin-bottom: 24px;
+}
+
+.searchList {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.listItemStyle {
+    padding: 16px 0;
+    margin: 0;
+    list-style: none;
+}
+
+.listItemStyle:last-child {
+    border-bottom: none;
+}
+
+.listItemStyle p {
+    margin: 0 0 8px 0;
+    line-height: 1.5;
+}
+
+.listItemStyle a {
+    color: #1976d2;
+    text-decoration: none;
+}
+
+.listItemStyle a:hover {
+    text-decoration: underline;
+}
+
+.noResults {
+    color: #666;
+    font-style: italic;
+}
+
+.dividerStyle {
+    height: 1px;
+    background-color: #e0e0e0;
+    margin: 0;
+}
+

@@ -7,10 +7,13 @@
 
 import { NextFunction, Request, Response } from 'express';
 import { logger } from 'genkit/logging';
+import { Document } from 'genkit/retriever';
 import { jwtDecode } from "jwt-decode";
 
 import { IngestionFlow } from '../flows/ingestionFlow.js';
 import { CompletionFlow } from '../flows/completionFlow.js';
+import { SearchFlow } from '../flows/searchFlow.js';
+
 import { ai } from '../genkit.js';
 import { hybridRetriever } from '../retrievers/hybridRetriever.js';
 
@@ -87,6 +90,46 @@ export const init = async (req: Request, res: Response) => {
 
 /**
  * @swagger
+ * /search:
+ *   post:
+ *     summary: Search for relevant documents
+ *     tags: [Chat]
+ *     responses:
+ *       200:
+ *         description: Success 
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               data:
+ *                 type: string
+ *                 example: מה זה שוק הכרמל?
+ */
+
+export const search = async(req: Request, res: Response) => {
+    try {
+        const docs: Document[] = await SearchFlow(req.body.data);
+        
+        // Process documents safely, handling potentially undefined metadata
+        const processedDocs = docs.map(doc => ({
+            text: doc.content[0].text,
+            url: doc.metadata?.url || doc.metadata?.payload?.url || '', // Try to get URL from metadata
+            score: doc.metadata?.score || 0
+        }));
+
+        res.status(200).json(processedDocs);
+    } catch (error) {
+        console.error('Error in search:', error);
+        res.status(500).json({ error: 'An error occurred during search' });
+    }
+
+}
+
+/**
+ * @swagger
  * /completion:
  *   get:
  *     summary: Get chat completion response via Server-Sent Events (SSE)
@@ -106,8 +149,7 @@ export const init = async (req: Request, res: Response) => {
  */
 export const completion = async (req: Request, res: Response) => { 
     
-    const access_token = 
-    req.cookies["access_token"];
+    const access_token = req.cookies["access_token"];
 
     if( !req.session || !req.session.userUtterance ) {
         logger.warn(`SSE request from session (${req.sessionID}) without a prompt.`);
