@@ -95,22 +95,25 @@ export async function embedText(text: string): Promise<number[]> {
 
 export const IngestionFlow = ai.defineFlow({
     name: "ingestionFlow",
-    inputSchema: z.string().describe("sitemap file path or URL"),
+    inputSchema: z.object({
+        url: z.string().describe("sitemap file path or URL"),
+        lang: z.string().describe("language code"),
+    })
 },
-async (contentMapUrl: string) => {
+async (input: { url: string, lang: string }) => {
 
     const cosmosContainer = await getVectorContainer();
 
     let xmlContent: string = "";
 
     try {
-        const url = new URL(contentMapUrl);
+        const url = new URL(input.url);
         if (url.protocol === 'file:') {
-            const filePath = fileURLToPath(contentMapUrl);
+            const filePath = fileURLToPath(input.url);
             xmlContent = await fs.readFile(filePath, 'utf8');
         } 
         else {
-            const content = await fetch(contentMapUrl);
+            const content = await fetch(input.url);
             xmlContent = await content.text();
         }
     } catch (error) {

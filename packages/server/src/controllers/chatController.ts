@@ -44,7 +44,9 @@ export const ingest = async (req: Request, res: Response) => {
     if( !url ) {
         throw new Error('URL is not defined in request body.');
     }
-    await IngestionFlow(url);
+
+    const lang = req.body.lang;
+    await IngestionFlow(url, lang);
     
     return res.status(202).send();
 }
