@@ -6,7 +6,8 @@
     "type": "module",
     "scripts": {
         "build": "tsc",
-        "dev": "DEBUG=genkit:* npx tsx src/index.ts"
+        "dev": "DEBUG=genkit:* npx tsx src/index.ts",
+        "genkit:ui": "genkit start -- npx tsx --watch src/index.ts"
     },
     "dependencies": {
         "@apollo/client": "^3.13.8",
