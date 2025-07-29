@@ -20,6 +20,7 @@ const config = {
             LOGIN: `${this.API_BASE_URL}/api/auth/login`,
             INIT: `${this.API_BASE_URL}/api/chat/init`,
             COMPLETION: `${this.API_BASE_URL}/api/chat/completion`,
+            SEARCH: `${this.API_BASE_URL}/api/chat/search`,
             INGEST: `${this.API_BASE_URL}/api/chat/ingest`,
             HEALTH: `${this.API_BASE_URL}/`,
         };

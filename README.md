@@ -32,7 +32,7 @@ Sundance is a pluggable, privacy-respecting AI chatbox that integrates:
 
 ### 2. Backend (Server)
 
-•	Built with Node.js and Express.js.
+•	Built with Node.js, Express.js, and Genkit that may be used with various plugins  - Gemini, OpenAI etc.
 
 •	Handles with middleware authentication via JWT.
 

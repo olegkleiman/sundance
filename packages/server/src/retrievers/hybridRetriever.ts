@@ -1,5 +1,5 @@
 // 
-// searchFlow.ts
+// hybridRetriever.ts    
 // Sundance project
 //
 // Created by: Oleg Kleiman on 16/07/2025
@@ -10,7 +10,7 @@ import * as z from 'zod';
 import { logger } from 'genkit/logging';
 import { Document, CommonRetrieverOptionsSchema } from 'genkit/retriever';
 import { getVectorContainer } from '../cosmosDB/utils.js';
-import { embedText } from '../flows/ingestionFlow.js';
+import { embedTexts } from '../flows/ingestionFlow.js';
 
 const hybridRetrieverOptionsSchema = CommonRetrieverOptionsSchema.extend({
     // 'k' is already in CommonRetrieverOptionsSchema, but you could add others:
@@ -29,14 +29,15 @@ export const hybridRetriever = ai.defineRetriever(
 
         logger.info(`Hybrid Retriever received query: ${query.text}`);
 
-        // const initialK = options.preRerankK || 10; // Default to 10 if not provided
-        // const finalK = options.k ?? 3; // Default final number of docs to 3 if k is not set
+        console.log(`Options: ${JSON.stringify(options)}`)
 
-        const embeddingArray = await embedText(query.text);
-        const topN = process.env.SEARCH_TOP_N || 10;    // default to 10
+        // const initialK = options.preRerankK || 10; // Default to 10 if not provided
+        const finalK = options.k ?? 3; // Default final number of docs to 3 if k is not set
+
+        const embeddingArray = await embedTexts([query.text]);
         const querySpec = {
             query: `
-                SELECT TOP ${topN}
+                SELECT TOP ${finalK}
                 c.payload,
                 VectorDistance(c.embedding, [${embeddingArray.join(',')}]) AS score
                 FROM c
@@ -46,26 +47,28 @@ export const hybridRetriever = ai.defineRetriever(
         const { resources } = await cosmosContainer.items.query(querySpec).fetchAll();
         logger.info(`Hybrid Retriever retrieved ${resources.length} documents`);
 
-        // --- Merge & Deduplicate Results ---
+        /// TODO: Merge & Deduplicate Retrieval Results
+        // 
         // Use a Map to store unique documents by content hash
         // Assign scores from both retrieval methods.        
-        const allDocsMap = new Map<string, 
-            { 
-                doc: Document; 
-                denseRank?: number; 
-                sparseRank?: number 
-           }>();
+        // const allDocsMap = new Map<string, 
+        //     { 
+        //         doc: Document; 
+        //         denseRank?: number; 
+        //         sparseRank?: number 
+        //    }>();
 
         return {
             documents: resources.map((doc) => ({
                 content: [
-                { 
-                    text: doc.payload.text,
-                    url: doc.payload.url
-                }
+                    { 
+                        text: doc.payload.text,
+                        url: doc.payload.url
+                    }
                 ],
                 metadata: doc,
             }))
         }
+
     }
 );

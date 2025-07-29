@@ -18,19 +18,34 @@ import { XMLParser } from 'fast-xml-parser';
 import * as cheerio from 'cheerio';
 import OpenAI from "openai";
 import { chunk } from 'llm-chunk';
+
+// Define the exact shape expected by the llm-chunk package
+type ChunkingConfig = {
+    minLength: number;
+    maxLength?: number;
+    splitter?: 'sentence' | 'paragraph';
+    overlap?: number;
+    delimiters?: string;
+};
 import { getVectorContainer } from '../cosmosDB/utils.js';
 import { randomUUID } from "node:crypto";
 
-const chunkingConfig = {
+const chunkingConfig: ChunkingConfig = {
     minLength: 1000,
     maxLength: 2000,
     splitter: 'sentence',
     overlap: 0,  // number of overlap chracters
     delimiters: '', // regex for base split method
-} as any;
+};
 
 function sleep(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+interface SitemapUrl {
+    loc: string;
+    // lastmod is also available but not used
+    lastmod?: string;
 }
 
 let openaiClient: OpenAI | null = null;
@@ -47,48 +62,21 @@ function getOpenAIClient(): OpenAI {
     return openaiClient;
 }
 
+type EmbeddingModel = 'text-embedding-ada-002' | 'text-embedding-3-small' | 'text-embedding-3-large'; // Add other valid models as needed
+const EMBEDDING_MODEL = process.env.EMBEDDING_MODEL as EmbeddingModel;
+
 const MAX_CHUNK_LENGTH = parseInt(process.env.MAX_CHUNK_LENGTH || "200");
 
 // Accepts an array of texts and returns an array of embeddings
 export async function embedTexts(texts: string[]): Promise<number[][]> {
-
-    const embedding_model = process.env.EMBEDDING_MODEL;
-    if( !embedding_model ) {
-        throw new Error('EMBEDDING_MODEL is not defined in environment variables.');
-    }
-
     try {
         const response = await getOpenAIClient().embeddings.create({
-            model: embedding_model,
+            model: EMBEDDING_MODEL,
             input: texts,
         });
         return response.data.map(item => item.embedding);
     } catch (error) {
         logger.error(`Error processing batch:`, error);
-        throw error;
-    }
-}
-
-// Returns standard JavaScript number array instead of Float32Array that by default returned from soma models (like CLIP)
-// This is because Cosmos DB used as vector DB, stores the enbeddings as plain JS Array.
-// See VectorDistance documentation for more information: https://learn.microsoft.com/en-us/azure/cosmos-db/nosql/query/vectordistance
-export async function embedText(text: string): Promise<number[]> {
-    
-    const embedding_model = process.env.EMBEDDING_MODEL;
-    if( !embedding_model ) {
-        throw new Error('EMBEDDING_MODEL is not defined in environment variables.');
-    }
-
-    try {
-        const _embedding = await getOpenAIClient().embeddings.create({
-            model: embedding_model,
-            input: text,
-        });
-
-        return _embedding.data[0].embedding;
-
-    } catch (error) {
-        logger.error(`Error processing text:`, error);
         throw error;
     }
 }
@@ -129,22 +117,39 @@ async (input: { url: string, lang: string }) => {
         throw new Error('TENANT_ID is not defined in environment variables.');
     }
 
-    const processUrl = async (url: any) => {
-        logger.debug(`Processing URL: ${url.loc}`);
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY = 1000; // 1 second
 
-        await sleep(200); // Simple rate limiting
-
-        const content:Response = await fetch(url.loc);
-        if (!content.ok) {
-            throw new Error(`Request failed with status ${content.status}`);
-        }
-        const contentText = await content.text();
-        const $ = cheerio.load(contentText);
-
-        // We'll embed the texts in batch, so gather the texts into the array
-        // and embed them all at once.
-        const texts = [];
+    async function withRetry<T>(fn: () => Promise<T>, retries = MAX_RETRIES): Promise<T> {
         try {
+            return await fn();
+        } catch (error) {
+            if (retries <= 0) throw error;
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            logger.warn(`Retrying after error: ${errorMessage}. ${retries} attempts left.`);
+            await sleep(RETRY_DELAY * (MAX_RETRIES - retries + 1));
+            return withRetry(fn, retries - 1);
+        }
+    }    
+
+    const processUrl = async (url: SitemapUrl) => {
+        try {
+
+            logger.debug(`Processing URL: ${url.loc}`);
+
+            await sleep(200); // Simple rate limiting
+
+            const response:Response = await fetch(url.loc);
+            if (!response.ok) {
+                throw new Error(`Request failed with status ${response.status}`);
+            }
+            const html = await response.text();
+            const $ = cheerio.load(html);
+
+            // We'll embed the texts in batch, so gather the texts into the array
+            // and embed them all at once.
+            const texts = [];
+
             const contentBlocks = $('.DCContentBlock');
             for (const block of contentBlocks) {
                 const text = $(block).text().replace(/\n/g, '').trim();
@@ -153,12 +158,10 @@ async (input: { url: string, lang: string }) => {
                     for (const chunk of chunks) {
                         if( chunk.length > 0 )
                             texts.push(chunk);
-                        //await embedAndUpsert(chunk, url.loc);
                     } 
                 } else {
                     if( text.length > 0 )
                         texts.push(text);
-                    //await embedAndUpsert(text, url.loc);
                 }
             }
 
@@ -172,7 +175,7 @@ async (input: { url: string, lang: string }) => {
                 id: randomUUID(),
                 embedding: embeddings[idx],
                 TenantId: tenantId,
-                payload: { text, url }
+                payload: { text, url: url.loc }
             }));
             
             await cosmosContainer.items.bulk(
@@ -189,19 +192,29 @@ async (input: { url: string, lang: string }) => {
         }
     }
 
-    async function processInBatches(urls: any[], batchSize: number, processUrl: (url: any) => Promise<void>) {
+    async function processInBatches(urls: SitemapUrl[], batchSize: number, processUrl: (url: SitemapUrl) => Promise<void>) {
         
         for (let i = 0; i < urls.length; i += batchSize) {
             const batch = urls.slice(i, i + batchSize);
 
             // Run all in parallel within the batch
-            await Promise.all(batch.map(processUrl));
+            await Promise.all(batch.map( async(url) => {
+                try {
+                    await withRetry( () => processUrl(url) );
+                } catch (error) {
+                    logger.error(`Error processing URL: ${url.loc}`);
+                    throw error;
+                }
+            }));
         }
     }
 
-    const urls = json.urlset.url.filter((url: any) => 
-        !url.loc.includes("/ar") && !url.loc.includes("/en")
-    );                
+    // The 'lang' parameter from the input is currently unused.
+    // The filter below is hardcoded to exclude common language paths.
+    // This could be made dynamic based on the `input.lang` if needed.
+    const urls: SitemapUrl[] = json.urlset.url.filter((url: SitemapUrl) => 
+        !url.loc.includes("/ar/") && !url.loc.includes("/en/")
+    );
 
     const batchSize = parseInt(process.env.INGESTION_BATCH_SIZE || "10");
     await processInBatches(urls, batchSize, processUrl);

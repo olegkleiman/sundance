@@ -17,16 +17,20 @@ import { executeGraphQLTool,
 export const CompletionFlow = ai.defineFlow(
     {
         name: "CompletionFlow",
-        inputSchema: z.string(),
+        inputSchema: z.object({
+            userInput: z.string(),
+            retrievedDocs: z.array(z.any())
+        }),
         outputSchema: z.any(),
     },
-    async (userInput: string, { context }) => {
+    async (input: { userInput: string, retrievedDocs: any[] }, { context }) => {
 
         const prompt = ai.prompt("graphql_agent");
         const rendered_prompt = await prompt.render(
             {
                 schemaSDL: graphQLSchema,
-                userInput: userInput                
+                userInput: input.userInput,
+                context: input.retrievedDocs                
             }
         );
         logger.debug(rendered_prompt);

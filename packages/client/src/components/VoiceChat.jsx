@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Routes, Route, useMatch, useNavigate } from 'react-router-dom';
 
 import ChatManager from "./ChatManager.jsx";
+import SearchManager from "./SearchManager.jsx"
 
 import AudioEngine from "../audioEngine.js";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -21,7 +22,6 @@ const VoiceChat = () => {
     const { getToken } = useAuth();
 
     const recognitionRef = useRef(null);
-    const tickerRef = useRef(null);
 
     function recogniztion_started() {
     }
@@ -125,10 +125,9 @@ const VoiceChat = () => {
                     aria-label="Send message"
                 />
             </div>
+            <SearchManager searchText={transcript}/>
             <ChatManager lastMessage={transcript}/>
-            <div className="ticker-container">
-                <div className="ticker" ref={tickerRef}>{responseContent}</div>
-            </div>
+
         </div>
     );
 };
