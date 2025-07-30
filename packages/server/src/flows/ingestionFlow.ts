@@ -14,10 +14,12 @@ import { fileURLToPath } from 'url';
 import * as z from 'zod';
 import { logger } from 'genkit/logging';
 import { ai } from '../genkit.js';
+import { GenerateResponse, MessageData } from 'genkit/beta';
 import { XMLParser } from 'fast-xml-parser';
 import * as cheerio from 'cheerio';
 import OpenAI from "openai";
-import { chunk } from 'llm-chunk';
+import { encoding_for_model } from '@dqbd/tiktoken';
+import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 
 // Define the exact shape expected by the llm-chunk package
 type ChunkingConfig = {
@@ -50,6 +52,11 @@ interface SitemapUrl {
 
 let openaiClient: OpenAI | null = null;
 
+const splitter = new RecursiveCharacterTextSplitter({
+    chunkSize: 512,
+    chunkOverlap: 50,
+});
+
 function getOpenAIClient(): OpenAI {
     if (openaiClient) {
         return openaiClient;
@@ -64,11 +71,34 @@ function getOpenAIClient(): OpenAI {
 
 type EmbeddingModel = 'text-embedding-ada-002' | 'text-embedding-3-small' | 'text-embedding-3-large'; // Add other valid models as needed
 const EMBEDDING_MODEL = process.env.EMBEDDING_MODEL as EmbeddingModel;
+if (!EMBEDDING_MODEL) {
+    throw new Error('The EMBEDDING_MODEL environment variable is missing or empty.');
+}
+const enc = encoding_for_model(EMBEDDING_MODEL);
 
 const MAX_CHUNK_LENGTH = parseInt(process.env.MAX_CHUNK_LENGTH || "200");
 
+
+// function chunkTextByTokens(text: string, maxTokens = 512): string[] {
+//     const tokens = enc.encode(text);
+//     const chunks: string[] = [];
+  
+//     for (let i = 0; i < tokens.length; i += maxTokens) {
+//       const chunkTokens = tokens.slice(i, i + maxTokens);
+//       const chunkText = enc.decode(chunkTokens);
+//       chunks.push(chunkText);
+//     }
+  
+//     return chunks;
+//   }
+
 // Accepts an array of texts and returns an array of embeddings
 export async function embedTexts(texts: string[]): Promise<number[][]> {
+    if( texts.length === 0 ) {
+        return [];
+    }
+
+    logger.debug(`Embedding ${texts.length} texts`)
     try {
         const response = await getOpenAIClient().embeddings.create({
             model: EMBEDDING_MODEL,
@@ -89,6 +119,8 @@ export const IngestionFlow = ai.defineFlow({
     })
 },
 async (input: { url: string, lang: string }) => {
+
+    const prompt = ai.prompt("split");
 
     const cosmosContainer = await getVectorContainer();
 
@@ -145,47 +177,64 @@ async (input: { url: string, lang: string }) => {
             }
             const html = await response.text();
             const $ = cheerio.load(html);
+            const title = $('title').text().trim();
 
             // We'll embed the texts in batch, so gather the texts into the array
             // and embed them all at once.
-            const texts = [];
+            const chunks: string[] = [];
 
             const contentBlocks = $('.DCContentBlock');
             for (const block of contentBlocks) {
                 const text = $(block).text().replace(/\n/g, '').trim();
-                if (text.length > MAX_CHUNK_LENGTH ) {
-                    const chunks = chunk(text, chunkingConfig);
-                    for (const chunk of chunks) {
-                        if( chunk.length > 0 )
-                            texts.push(chunk);
-                    } 
-                } else {
-                    if( text.length > 0 )
-                        texts.push(text);
+
+                if( !text || text.length === 0 ) {
+                    logger.debug(`No texts found for URL: ${url.loc}`);
+                    continue;
                 }
+
+                // const rendered_prompt = await prompt.render({ text: text });
+                // const response: GenerateResponse = await ai.generate({ ...rendered_prompt });
+                // const messages : MessageData[] = response.messages;
+                // const modelMessages = messages.filter( msg => msg.role === "model");
+                // for(const msg of modelMessages) {
+                //     // Check if content exists and has at least one item
+                //     if (msg.content && msg.content.length > 0 && 'text' in msg.content[0]) {
+                //         const messageText = msg.content[0].text;
+                //         if( messageText ) {
+                //             logger.debug(`${msg.role}: ${messageText}`);
+                //             chunks.push(messageText);
+                //         }
+                //     }
+                // }
+
+                const docs = await splitter.createDocuments([text]);
+                if( docs.length > 0 ) {
+                    const items = docs.map(doc => doc.pageContent);
+                    chunks.push(...items);
+                }
+
             }
 
-            if( texts.length === 0 ) {
-                logger.debug(`No texts found for URL: ${url.loc}`);
-                return;
-            }
-
-            const embeddings = await embedTexts(texts);
-            const items = texts.map((text, idx) => ({
+            const embeddings = await embedTexts(chunks);
+            const items = chunks.map((text, idx) => ({
                 id: randomUUID(),
                 embedding: embeddings[idx],
                 TenantId: tenantId,
-                payload: { text, url: url.loc }
+                payload: { text, title:title, url: url.loc }
             }));
             
-            await cosmosContainer.items.bulk(
-                items.map(item => ({
-                    operationType: "Upsert",
-                    resourceBody: item
-                }))
-            );
-            logger.debug(`Upserted ${items.length} items`);
-
+            if( items.length != 0 ) {
+                await cosmosContainer.items.bulk(
+                    items.map(item => ({
+                        operationType: "Upsert",
+                        resourceBody: item
+                    }))
+                );
+                logger.debug(`Upserted ${items.length} items`);
+            }
+            else {
+                logger.debug(`No items to upsert`);
+            }
         } catch (error) {
             logger.error(`Error processing URL:`, error);
             throw error;

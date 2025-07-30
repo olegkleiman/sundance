@@ -49,7 +49,10 @@ export const ingest = async (req: Request, res: Response) => {
     }
 
     const lang = req.body.lang;
-    await IngestionFlow(url, lang);
+    await IngestionFlow({
+        url, 
+        lang
+    });
     
     return res.status(202).send();
 }
