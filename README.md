@@ -38,7 +38,7 @@ Sundance is a pluggable, privacy-respecting AI chatbox that integrates:
 
 •	Exposes multiple endpoints (the full list is available in the [OpenAPI specification (Swagger)](http://<deploy_host>/api-docs/))
 
-*  **/ingest** - Ingests website content for RAG.
+*  **/ingest** - Ingests website content specified by sitemap.xml for RAG.
 ```javascript
 /**
  * @swagger
@@ -65,6 +65,30 @@ Sundance is a pluggable, privacy-respecting AI chatbox that integrates:
  *                 example: "he"
  */    
 ```
+
+*  **/search** - Performs the RAG step by a help of hybridRetriever. This retriever combines the vector (dense) and full-text (sparse) search results using Reciprocal Rank Fusion (RRF).
+```javascript
+/**
+ * @swagger
+ * /search:
+ *   post:
+ *     summary: Search for relevant documents
+ *     tags: [Chat]
+ *     responses:
+ *       200:
+ *         description: Success 
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               data:
+ *                 type: string
+ *                 example: חוזה שכירות מומלץ
+ */
+``` 
 
 *  **/init** - Initializes a new conversation. Stores in the session variabl the user's utterance.
 ```javascript

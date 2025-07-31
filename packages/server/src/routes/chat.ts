@@ -6,7 +6,9 @@
 // 
 
 import express from 'express';
-import { ingest, completion, init, search } from '../controllers/chatController.js';
+import { completion, init } from '../controllers/chatController.js';
+import { search } from '../controllers/searchController.js';
+import { ingest } from '../controllers/ingestController.js';
 
 const router = express.Router();
          
