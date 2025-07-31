@@ -5,11 +5,18 @@
 // Created by: Oleg Kleiman on 16/07/2025
 // 
 
+import crypto from 'crypto';
 import { ai } from '../genkit.js';
 import * as z from 'zod';
 import { logger } from 'genkit/logging';
 import { Document, CommonRetrieverOptionsSchema } from 'genkit/retriever';
-import { cosmosDBRetriever } from './cosmosDBRetriever.js';
+import { vectorDbRetriever } from './vectorDbRetriever.js';
+import { keywordRetriever } from './keywordRetriever.js';
+import { rrfReranker } from '../rerankers/rrfReranker.js';
+
+const getHash = (text: string): string => {
+    return crypto.createHash('sha256').update(text).digest('hex');
+}
 
 const hybridRetrieverOptionsSchema = CommonRetrieverOptionsSchema.extend({
     // 'k' is already in CommonRetrieverOptionsSchema, but you could add others:
@@ -17,27 +24,6 @@ const hybridRetrieverOptionsSchema = CommonRetrieverOptionsSchema.extend({
     customFilter: z.string().optional().describe("A custom filter string"),
 });
 
-/**
- * Performs a keyword-based search against Cosmos DB.
- * Note: For production, ensure a full-text index is configured on `c.payload.text` for performance.
- */
-// async function keywordSearch(queryText: string, k: number): Promise<Document[]> {
-//     const cosmosContainer = await getVectorContainer();
-//     const querySpec = {
-//         // Using CONTAINS for a basic keyword search. The `true` enables case-insensitivity.
-//         query: `SELECT TOP @k c.id, c.payload FROM c WHERE CONTAINS(c.payload.text, @query, true)`,
-//         parameters: [
-//             { name: "@k", value: k },
-//             { name: "@query", value: queryText }
-//         ]
-//     };
-//     const { resources } = await cosmosContainer.items.query(querySpec).fetchAll();
-//     logger.info(`Keyword search retrieved ${resources.length} documents for query: "${queryText}"`);
-//     return resources.map((doc) => Document.fromObject({
-//         content: [{ text: doc.payload.text, url: doc.payload.url }],
-//         metadata: doc,
-//     }));
-// }
 
 /**
  * Merges and reranks document lists using Reciprocal Rank Fusion (RRF).
@@ -79,25 +65,69 @@ export const hybridRetriever = ai.defineRetriever(
             const finalK = options.k ?? 5;
             const searchK = options.preRerankK ?? 10; // Retrieve more documents for better reranking
 
+            // --- Merge & Deduplicate Results ---
+            // Use a Map to store unique documents by content hash
+            // Assign scores from both retrieval methods.        
+            const allDocsMap = new Map<string, 
+                { 
+                    doc: Document; 
+                    denseRank?: number; 
+                    sparseRank?: number 
+            }>();
+            
             // 1. Perform vector (dense) search
             const denseDocs: Document[] = await ai.retrieve({
-                retriever: cosmosDBRetriever,
+                retriever: vectorDbRetriever,
                 query: query,
                 options: { k: searchK }
             });
 
-            return {
-                documents: denseDocs
-            };
+            // Actual relevance scores aren't readily available
+            denseDocs.forEach((doc, i) => {
+                const docHash = getHash(doc.text);
+                // Assign a simple rank-based score (higher rank = higher score)
+                allDocsMap.set(docHash, { doc, denseRank: i });
+            }); 
 
             // 2. Perform keyword (sparse) search
-            // const keywordResults = await keywordSearch(query.text, searchK);
+            const sparseDocs = await ai.retrieve({
+                retriever: keywordRetriever,
+                query: query,
+                options: { k: searchK }
+            });
+            sparseDocs.forEach((doc, i) => {
+                const docHash = getHash(doc.text);
+                const existingDoc = allDocsMap.get(docHash);
+                if (existingDoc) {
+                    existingDoc.sparseRank = i;
+                } else {
+                    allDocsMap.set(docHash, { doc, sparseRank: i });
+                }
+            });
 
-            // // 3. Merge and rerank results
-            // const mergedDocs = rerankAndMerge([vectorResults.documents, keywordResults], finalK);
+            // 3. Merge and rerank results
 
-            // logger.info(`Hybrid Retriever returned ${mergedDocs.length} documents after merging.`);
-            // return { documents: mergedDocs };
+            const combinedDocsWithScores = Array.from(allDocsMap.values())
+            .map(({ doc, denseRank, sparseRank }) => 
+            {
+                doc.metadata = {
+                    ...doc.metadata || {},
+                    denseRank: denseRank ?? 0,
+                    sparseRank: sparseRank ?? 0,
+                }
+                return doc;
+            });
+
+            const rerankedDocs = await ai.rerank({
+                reranker: rrfReranker,
+                query: query,
+                documents: combinedDocsWithScores,
+                options: { k: finalK }
+            });
+
+            return {
+                documents: rerankedDocs
+            };
 
         } catch (error) {
             logger.error('Error in hybridRetriever:', error);
