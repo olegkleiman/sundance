@@ -14,7 +14,7 @@ import { ai } from '../genkit.js';
 // and, hence, 'query' parameter is not used
 export const RRFusionReranker = ai.defineReranker(
     {
-        name: "rrfReranker"
+        name: "RRFusionReranker"
     },
     async(query, documents, options) => {
                 

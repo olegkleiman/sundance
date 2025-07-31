@@ -12,54 +12,14 @@ import { jwtDecode } from "jwt-decode";
 
 import { IngestionFlow } from '../flows/ingestionFlow.js';
 import { CompletionFlow } from '../flows/completionFlow.js';
-import { SearchFlow } from '../flows/searchFlow.js';
 
 import { ai } from '../genkit.js';
 import { hybridRetriever } from '../retrievers/hybridRetriever.js';
 
-/**
- * @swagger
- * /ingest:
- *   tags: [Ingest]
- *   post:
- *     summary: Ingests website content for RAG
- *     tags: [RAG]
- *     responses:
- *       202:
- *         description: Accepted 
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               url:
- *                 type: string
- *                 example: "https://www.tel-aviv.gov.il:443/sitemap0.xml"
- *               lang:
- *                 type: string
- *                 example: "he"
- */    
-export const ingest = async (req: Request, res: Response) => {
-
-    const url = req.body.url;
-    if( !url ) {
-        throw new Error('URL is not defined in request body.');
-    }
-
-    const lang = req.body.lang;
-    await IngestionFlow({
-        url, 
-        lang
-    });
-    
-    return res.status(202).send();
-}
 
 /**
  * @swagger
- * /init:
+ * /chat//init:
  *   post:
  *     summary: Initialize a new conversation
  *     tags: [Chat]
@@ -91,49 +51,10 @@ export const init = async (req: Request, res: Response) => {
     res.status(200).json({ message: "User's utterance received" });
 };
 
-/**
- * @swagger
- * /search:
- *   post:
- *     summary: Search for relevant documents
- *     tags: [Chat]
- *     responses:
- *       200:
- *         description: Success 
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               data:
- *                 type: string
- *                 example: מה זה שוק הכרמל?
- */
-
-export const search = async(req: Request, res: Response) => {
-    try {
-        const docs: Document[] = await SearchFlow(req.body.data);
-        
-        // Process documents safely, handling potentially undefined metadata
-        const processedDocs = docs.map(doc => ({
-            text: doc.content[0].text,
-            url: doc.metadata?.url || doc.metadata?.payload?.url || '', // Try to get URL from metadata
-            score: doc.metadata?.score || 0
-        }));
-
-        res.status(200).json(processedDocs);
-    } catch (error) {
-        console.error('Error in search:', error);
-        res.status(500).json({ error: 'An error occurred during search' });
-    }
-
-}
 
 /**
  * @swagger
- * /completion:
+ * /chat/completion:
  *   get:
  *     summary: Get chat completion response via Server-Sent Events (SSE)
  *     tags: [Chat]
