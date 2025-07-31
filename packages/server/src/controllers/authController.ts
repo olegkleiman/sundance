@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { logger } from 'genkit/logging';
 import { redisClient } from '../config/redis.js';
 
-import { loginSchema, refreshTokenSchema, validate } from './auth.schema';
+import { loginSchema, validate } from './auth.schema.js';
 
 export const login = [
     validate(loginSchema),

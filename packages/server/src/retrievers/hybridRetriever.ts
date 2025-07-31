@@ -12,10 +12,11 @@ import { logger } from 'genkit/logging';
 import { Document, CommonRetrieverOptionsSchema } from 'genkit/retriever';
 import { vectorDbRetriever } from './vectorDbRetriever.js';
 import { keywordRetriever } from './keywordRetriever.js';
-import { rrfReranker } from '../rerankers/rrfReranker.js';
+import { RRFusionReranker } from '../rerankers/RRFusionReranker.js';
 
-const getHash = (text: string): string => {
-    return crypto.createHash('sha256').update(text).digest('hex');
+const getDocumentHash = (doc: Document): string => {
+    const content = doc.content?.[0]?.text || '';
+    return crypto.createHash('sha256').update(content).digest('hex');
 }
 
 const hybridRetrieverOptionsSchema = CommonRetrieverOptionsSchema.extend({
@@ -53,6 +54,16 @@ function rerankAndMerge(results: Document[][], finalK: number): Document[] {
     return fusedResults.slice(0, finalK).map(item => item.doc);
 }
 
+type DocumentWithRanks = {
+    doc: Document;
+    denseRank?: number;
+    sparseRank?: number;
+};
+
+/**
+ * Hybrid retriever that combines vector (dense) and keyword (sparse) search results.
+ * Uses Reciprocal Rank Fusion (RRF) for reranking.
+ */
 export const hybridRetriever = ai.defineRetriever(
     {
         name: "hybridRetriever",
@@ -68,35 +79,37 @@ export const hybridRetriever = ai.defineRetriever(
             // --- Merge & Deduplicate Results ---
             // Use a Map to store unique documents by content hash
             // Assign scores from both retrieval methods.        
-            const allDocsMap = new Map<string, 
-                { 
-                    doc: Document; 
-                    denseRank?: number; 
-                    sparseRank?: number 
-            }>();
+            const allDocsMap = new Map<string, DocumentWithRanks>();
             
-            // 1. Perform vector (dense) search
-            const denseDocs: Document[] = await ai.retrieve({
-                retriever: vectorDbRetriever,
-                query: query,
-                options: { k: searchK }
-            });
+            // 1. Perform vector (dense) and keyword (sparse) searches in parallel
+            const [denseDocs, sparseDocs] = await Promise.all([
+                ai.retrieve({
+                    retriever: vectorDbRetriever,
+                    query,
+                    options: { k: searchK }
+                }).catch( e => {
+                    logger.error('Error in vectorDbRetriever:', e);
+                    return [];
+                }),
+                ai.retrieve({
+                    retriever: keywordRetriever,
+                    query,
+                    options: { k: searchK }
+                }).catch( e => {
+                    logger.error('Error in keywordRetriever:', e);
+                    return [];
+                })
+            ]);            
 
             // Actual relevance scores aren't readily available
             denseDocs.forEach((doc, i) => {
-                const docHash = getHash(doc.text);
+                const docHash = getDocumentHash(doc);
                 // Assign a simple rank-based score (higher rank = higher score)
                 allDocsMap.set(docHash, { doc, denseRank: i });
             }); 
 
-            // 2. Perform keyword (sparse) search
-            const sparseDocs = await ai.retrieve({
-                retriever: keywordRetriever,
-                query: query,
-                options: { k: searchK }
-            });
             sparseDocs.forEach((doc, i) => {
-                const docHash = getHash(doc.text);
+                const docHash = getDocumentHash(doc);
                 const existingDoc = allDocsMap.get(docHash);
                 if (existingDoc) {
                     existingDoc.sparseRank = i;
@@ -104,6 +117,7 @@ export const hybridRetriever = ai.defineRetriever(
                     allDocsMap.set(docHash, { doc, sparseRank: i });
                 }
             });
+            logger.info(`Found ${allDocsMap.size} unique documents after merging results`);
 
             // 3. Merge and rerank results
 
@@ -119,7 +133,7 @@ export const hybridRetriever = ai.defineRetriever(
             });
 
             const rerankedDocs = await ai.rerank({
-                reranker: rrfReranker,
+                reranker: RRFusionReranker,
                 query: query,
                 documents: combinedDocsWithScores,
                 options: { k: finalK }
