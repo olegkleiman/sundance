@@ -49,7 +49,7 @@ function getClient(): CosmosClient {
 
 }
 
-export async function getVectorContainer() {
+export async function getContainer() {
 
   const cosmosDatabaseId = process.env.COSMOS_DATABASE_ID;
   if( !cosmosDatabaseId ) {

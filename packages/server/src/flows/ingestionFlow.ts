@@ -29,7 +29,7 @@ type ChunkingConfig = {
     overlap?: number;
     delimiters?: string;
 };
-import { getVectorContainer } from '../cosmosDB/utils.js';
+import { getContainer } from '../cosmosDB/utils.js';
 import { randomUUID } from "node:crypto";
 
 const chunkingConfig: ChunkingConfig = {
@@ -122,7 +122,7 @@ async (input: { url: string, lang: string }) => {
 
     const prompt = ai.prompt("split");
 
-    const cosmosContainer = await getVectorContainer();
+    const cosmosContainer = await getContainer();
 
     let xmlContent: string = "";
 
