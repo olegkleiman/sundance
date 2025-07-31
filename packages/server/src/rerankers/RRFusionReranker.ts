@@ -1,6 +1,6 @@
 
 // 
-// rrfReranker.ts    
+// RRFusionReranker.ts    
 // Sundance project
 //
 // Created by: Oleg Kleiman on 16/07/2025
@@ -12,7 +12,7 @@ import { ai } from '../genkit.js';
 // based on their relevance to the specific query.
 // In the case of RRF-ranking, however, the re-ordiring is based on pre-calculated ranks
 // and, hence, 'query' parameter is not used
-export const rrfReranker = ai.defineReranker(
+export const RRFusionReranker = ai.defineReranker(
     {
         name: "rrfReranker"
     },
