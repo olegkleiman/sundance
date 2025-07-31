@@ -152,17 +152,38 @@ async (input: { url: string, lang: string }) => {
     const MAX_RETRIES = 3;
     const RETRY_DELAY = 1000; // 1 second
 
-    async function withRetry<T>(fn: () => Promise<T>, retries = MAX_RETRIES): Promise<T> {
-        try {
-            return await fn();
-        } catch (error) {
-            if (retries <= 0) throw error;
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            logger.warn(`Retrying after error: ${errorMessage}. ${retries} attempts left.`);
-            await sleep(RETRY_DELAY * (MAX_RETRIES - retries + 1));
-            return withRetry(fn, retries - 1);
+    async function withRetry<T>(
+        fn: () => Promise<T>, 
+        maxRetries = MAX_RETRIES,
+        shouldRetry: (error: any) => boolean = () => true
+    ): Promise<T> {
+        let lastError: any;
+        
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+                return await fn();
+            } catch (error) {
+                lastError = error;
+                
+                // Check if we should retry this error
+                if (attempt === maxRetries || !shouldRetry(error)) {
+                    break;
+                }
+                
+                const delayMs = Math.min(
+                    RETRY_DELAY * Math.pow(2, attempt), // Exponential backoff
+                    30000 // Max 30 seconds
+                );
+                
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                logger.warn(`Attempt ${attempt + 1}/${maxRetries} failed: ${errorMessage}. Retrying in ${delayMs}ms...`);
+                
+                await sleep(delayMs);
+            }
         }
-    }    
+        
+        throw lastError;
+    }
 
     const processUrl = async (url: SitemapUrl) => {
         try {
@@ -176,12 +197,22 @@ async (input: { url: string, lang: string }) => {
                 throw new Error(`Request failed with status ${response.status}`);
             }
             const html = await response.text();
-            const $ = cheerio.load(html);
-            const title = $('title').text().trim();
+            const $ = cheerio.load(html);            
 
             // We'll embed the texts in batch, so gather the texts into the array
             // and embed them all at once.
             const chunks: string[] = [];
+
+            const h1 = $('h1').text();
+            const ogTitle = $('meta[property="og:title"]').attr('content');
+            const title = ogTitle || h1;
+            if( title ) {
+                chunks.push(title);
+            }
+            const ogDescription = $('meta[property="og:description"]').attr('content');
+            if( ogDescription ) {
+                chunks.push(ogDescription);
+            }
 
             const contentBlocks = $('.DCContentBlock');
             for (const block of contentBlocks) {
@@ -242,19 +273,44 @@ async (input: { url: string, lang: string }) => {
     }
 
     async function processInBatches(urls: SitemapUrl[], batchSize: number, processUrl: (url: SitemapUrl) => Promise<void>) {
+        const BATCH_DELAY_MS = 1000; // 1 second delay between batches
+        const ITEM_DELAY_MS = 100;   // 100ms delay between items in a batch
         
         for (let i = 0; i < urls.length; i += batchSize) {
             const batch = urls.slice(i, i + batchSize);
+            logger.info(`Processing batch ${Math.floor(i/batchSize) + 1} of ${Math.ceil(urls.length/batchSize)}`);
 
-            // Run all in parallel within the batch
-            await Promise.all(batch.map( async(url) => {
+            // Process items in batch with a small delay between each
+            for (const url of batch) {
                 try {
-                    await withRetry( () => processUrl(url) );
+                    await withRetry(
+                        async () => {
+                            await processUrl(url);
+                            // Add a small delay between items in the same batch
+                            await sleep(ITEM_DELAY_MS);
+                        },
+                        3, // max retries
+                        (error: any) => {
+                            // Check if this is a rate limit error
+                            if (error.message && error.message.includes('The request rate is too large')) {
+                                logger.warn('Rate limit hit, will retry with backoff');
+                                return true;
+                            }
+                            return false;
+                        }
+                    );
                 } catch (error) {
-                    logger.error(`Error processing URL: ${url.loc}`);
-                    throw error;
+                    logger.error(`Error processing URL: ${url.loc}`, error);
+                    // Continue with next URL instead of failing the entire batch
+                    continue;
                 }
-            }));
+            }
+
+            // Add delay between batches if not the last batch
+            if (i + batchSize < urls.length) {
+                logger.debug(`Waiting ${BATCH_DELAY_MS}ms before next batch...`);
+                await sleep(BATCH_DELAY_MS);
+            }
         }
     }
 
