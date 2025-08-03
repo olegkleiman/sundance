@@ -20,28 +20,15 @@ dotenv.config({ path: envPath });
 import { initializeRedisClient } from './config/redis.js';
 
 import app from './app.js';
-import { ai } from './genkit.js';
 
 // Initialize Redis connection
 initializeRedisClient();
 
 const PORT = process.env.PORT || 8099;
-const server = app.listen(PORT, () => {
-  const address = server.address();
-  let host = 'localhost';
-  
-  if (address === null) {
-    host = `localhost:${PORT}`;
-  } else if (typeof address === 'string') {
-    host = address;
-  } else {
-    // Handle IPv6 addresses by surrounding with brackets
-    const hostname = address.address === '::' ? 'localhost' : 
-                    (address.family === 'IPv6' ? `[${address.address}]` : address.address);
-    host = `${hostname}:${address.port}`;
-  }
-  
-  console.info(`✅ Sundance Server is running at \x1b[4;34m\x1b]8;;http://${host}:${PORT}\x1b\\http://localhost:${PORT}\x1b]8;;\x1b\\\x1b[0m`);
+const HOST = '0.0.0.0'; // Listen on all available network interfaces
+
+app.listen(Number(PORT), HOST, () => {
+  console.info(`✅ Sundance Server is running and accessible at \x1b[4;34m\x1b]8;;http://localhost:${PORT}\x1b\\http://localhost:${PORT}\x1b]8;;\x1b\\\x1b[0m`);
 });
 
 export default app;

@@ -12,6 +12,7 @@ import { logger } from 'genkit/logging';
 import { Document, CommonRetrieverOptionsSchema } from 'genkit/retriever';
 import { vectorDbRetriever } from './vectorDbRetriever.js';
 import { keywordRetriever } from './keywordRetriever.js';
+import { bm25Retriever } from './bm25Retriever.js';
 import { RRFusionReranker } from '../rerankers/RRFusionReranker.js';
 
 const getDocumentHash = (doc: Document): string => {
@@ -92,7 +93,7 @@ export const hybridRetriever = ai.defineRetriever(
                     return [];
                 }),
                 ai.retrieve({
-                    retriever: keywordRetriever,
+                    retriever: keywordRetriever, // bm25Retriever, //
                     query,
                     options: { k: searchK }
                 }).catch( e => {

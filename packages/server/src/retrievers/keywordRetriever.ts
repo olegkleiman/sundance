@@ -10,6 +10,7 @@ import { logger } from 'genkit/logging';
 import { Document, CommonRetrieverOptionsSchema } from 'genkit/retriever';
 import * as z from 'zod';
 import { getContainer } from '../cosmosDB/utils.js';
+import { GenerateResponse } from 'genkit/beta';
 
 /**
  * Performs a keyword-based search against Cosmos DB.
@@ -24,18 +25,41 @@ export const keywordRetriever = ai.defineRetriever(
             
         try {
             logger.info(`Keyword Retriever received query: ${query.text}`);
+            
+            const k = options.k ?? 3; // Set default final number of docs to 3 if k is not set
+
             const cosmosContainer = await getContainer();
 
-            const k = options.k ?? 3; // Default final number of docs to 3 if k is not set
+            const prompt = ai.prompt("keywords_split");
+            const rendered_prompt = await prompt.render({ utterance: query.text });
 
+            const keywordsResponse: GenerateResponse = await ai.generate({
+                ...rendered_prompt,            
+            })
+            const modelMessages = keywordsResponse.messages.filter( msg => msg.role === "model" );
+            const keywordsText = modelMessages[0].content[0].text;
+            logger.debug(`Keywords extracted: ${keywordsText}`);
+            if( !keywordsText ) {
+                throw new Error('No keywords extracted');
+            }
+            const keywords = JSON.parse(keywordsText);
+
+            const whereClause = keywords.map( (k: string) => `CONTAINS(c.payload.text, "${k}", true)` ).join(" OR ");
             const querySpec = {
-            // Using CONTAINS for a basic keyword search. The `true` enables case-insensitivity.
-            query: `SELECT TOP @k c.id, c.payload FROM c WHERE CONTAINS(c.payload.text, @query, true)`,
-            parameters: [
-                { name: "@k", value: k },
-                { name: "@query", value: query.text }
+                query: `SELECT TOP @k c.id, c.payload FROM c WHERE ${whereClause}`,
+                parameters: [
+                    { name: "@k", value: k },
                 ]
-            };
+            }
+
+            // const querySpec = {
+            // // Using CONTAINS for a basic keyword search. The `true` enables case-insensitivity.
+            // query: `SELECT TOP @k c.id, c.payload FROM c WHERE CONTAINS(c.payload.text, @query, true)`,
+            // parameters: [
+            //     { name: "@k", value: k },
+            //     { name: "@query", value: query.text }
+            //     ]
+            // };
     
             const { resources } = await cosmosContainer.items.query(querySpec).fetchAll();
             logger.info(`Keyword search retrieved ${resources.length} documents for query: "${query.text}"`);

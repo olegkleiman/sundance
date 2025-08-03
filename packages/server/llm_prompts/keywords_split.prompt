@@ -1,0 +1,3 @@
+Extract the keywords for full-text search from this utterance, and return only the keywords as a JSON array. Do not include explanations, markdown or extra text.
+
+Utterance: {{utterance}}
