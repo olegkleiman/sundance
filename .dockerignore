@@ -1,0 +1,15 @@
+node_modules
+npm-debug.log
+Dockerfile
+docker-compose.yml
+.git
+.gitignore
+.env
+.vscode
+coverage
+**/dist
+**/build
+**/.next
+**/node_modules
+**/.git
+**/.DS_Store

@@ -160,7 +160,10 @@ Sundance is a pluggable, privacy-respecting AI chatbox that integrates:
 ## Cosmos DB embedding search logic
 1. At module level, the Azure Cosmos DB database and container are created if they do not exist.
 
-After successful execution the container looks as follows in Azure Portal:
+Cosmos Database id is configured in .env file as COSMOS_DATABASE_ID.
+The Container id is configured in .env file as COSMOS_CONTAINER_ID.
+
+After successful execution the created container looks as follows in Azure Portal:
 ![alt text](image-2.png)
 ```
 path: '/embedding',
@@ -320,10 +323,10 @@ LOGIN_DEVICE_ID=
 TENANT_ID=
 
 # Vector DB
-COSMOS_CLIENT_URL=
-COSMOS_CLIENT_KEY=
-COSMOS_DATABASE_ID=chunks
-COSMOS_CONTAINER_ID=danceR
+COSMOS_CLIENT_URL=https://<account_name>.documents.azure.com:443/
+COSMOS_CLIENT_KEY=<xxx>
+COSMOS_DATABASE_ID=tel-aviv.gov.il
+COSMOS_CONTAINER_ID=chunks
 SEARCH_TOP_N=3
 
 # LLMs & Embeddings
@@ -366,7 +369,7 @@ When running for the first time, the page requests the permissions to use microp
 1. Ensure that Azure Cosmos DB account is exists.
 Its connection string is defined in the .env file in the two variables: 
 ```
-COSMOS_CLIENT_URL=<xxx>
+COSMOS_CLIENT_URL=https://<account_name>.documents.azure.com:443/
 COSMOS_CLIENT_KEY=<xxx>
 ```
 2. Start the server by running `npm run start`.

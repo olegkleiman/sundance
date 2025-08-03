@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  server:
+    build: .
+    ports:
+      - "8099:8099"
+    env_file:
+      - ./packages/server/.env
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/packages/server/node_modules
+    depends_on:
+      - redis
+      # Add other services your server depends on
+
+  # Redis service (assuming your server uses Redis)
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  # Add other services like databases, message queues, etc.
+
+volumes:
+  redis_data:

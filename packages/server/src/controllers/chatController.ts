@@ -72,7 +72,9 @@ export const init = async (req: Request, res: Response) => {
  *       - bearerAuth: []
  */
 export const completion = async (req: Request, res: Response) => { 
-    
+
+    logger.debug(`Performing /completion for SesssionID: ${req.sessionID}`);
+
     const access_token = req.cookies["access_token"];
 
     if( !req.session || !req.session.userUtterance ) {
@@ -110,7 +112,8 @@ export const completion = async (req: Request, res: Response) => {
                 preRerankK: 10,
                 customFilter: "words count > 5",
             }
-        });        
+        }); 
+        logger.debug(`RAG step finished with ${docs.length} documents`);
 
         // Completion step  
         const stream = await CompletionFlow(userUtterance, {
