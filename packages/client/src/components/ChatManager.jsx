@@ -61,7 +61,7 @@ const ChatManager = ({ lastMessage }) => {
     const completeConversation = async () => { 
         try {
             let position = window.innerWidth;
-            let animationId = null;
+            let animationId = nu
 
             const eventSource = new EventSource(config.ENDPOINTS.COMPLETION, {
                 withCredentials: true
@@ -77,7 +77,7 @@ const ChatManager = ({ lastMessage }) => {
                 if (animationId) {
                     cancelAnimationFrame(animationId);
                 }
-                setError('Error receiving streaming response');
+                // setError('Error receiving streaming response');
             };
             
             eventSource.addEventListener('end', () => {
