@@ -9,6 +9,8 @@ import React, { useRef, useEffect, useState } from 'react';
 import { useAuth } from "../context/AuthContext.jsx";
 import config from '../config/config.js';
 
+import './ChatManager.css';
+
 const ChatManager = ({ lastMessage }) => {
     const tickerRef = useRef(null);
     const [error, setError] = useState(null);
@@ -61,7 +63,7 @@ const ChatManager = ({ lastMessage }) => {
     const completeConversation = async () => { 
         try {
             let position = window.innerWidth;
-            let animationId = nu
+            let animationId = null;
 
             const eventSource = new EventSource(config.ENDPOINTS.COMPLETION, {
                 withCredentials: true
@@ -154,6 +156,7 @@ const ChatManager = ({ lastMessage }) => {
 
     return (
         <div className="chat-manager">
+            <h2 className="chatTitle">Chat Conversation</h2>
             {lastMessage && (
                 <div className="user-message">
                     <strong>You:</strong> {lastMessage}
