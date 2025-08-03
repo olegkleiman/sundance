@@ -72,32 +72,11 @@
     box-sizing: border-box;
 }
 
-.ticker-container {
-    margin: 20px 0;
-    width: 100%;
-    direction: rtl;
-    text-align: right;
-}
-
 .status {
     font-size: 1.2rem;
     margin-bottom: 2rem;
     color: #333;
     text-align: right;
-}
-
-.ticker {
-    width: 100%;
-    padding: 12px 20px;
-    font-size: 16px;
-    border: 2px solid #4285F4;
-    border-radius: 25px;
-    text-align: right;
-    direction: rtl;
-    outline: none;
-    transition: all 0.3s ease;
-    background: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .sendButtonStyle {

@@ -1,3 +1,11 @@
+// 
+// 
+// VoiceChat.ts
+// Sundance project, client side
+//
+// Created by: Oleg Kleiman on 30/07/2025
+// 
+
 import React, { useRef, useEffect, useState } from 'react';
 import { Routes, Route, useMatch, useNavigate } from 'react-router-dom';
 
@@ -6,7 +14,6 @@ import SearchManager from "./SearchManager.jsx"
 
 import AudioEngine from "../audioEngine.js";
 import { useAuth } from "../context/AuthContext.jsx";
-
 
 import './VoiceChat.css';
 
