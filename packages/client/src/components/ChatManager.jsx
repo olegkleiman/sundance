@@ -161,7 +161,7 @@ const ChatManager = ({ lastMessage }) => {
             )}
             <div className="ticker-container">
                 <div className="ticker" ref={tickerRef}>
-                    {responseContent || 'Waiting for response...'}
+                    {responseContent || 'Waiting for your input...'}
                 </div>
             </div>
         </div>
