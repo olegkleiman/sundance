@@ -125,9 +125,14 @@ const VoiceChat = () => {
                     aria-label="Send message"
                 />
             </div>
-            <SearchManager searchText={transcript}/>
-            <ChatManager lastMessage={transcript}/>
-
+            <div style={{ display: 'flex', gap: '20px', width: '100%' }}>
+                <div style={{ flex: 1 }}>
+                    <SearchManager searchText={transcript}/>
+                </div>
+                <div style={{ flex: 1 }}>
+                    <ChatManager lastMessage={transcript}/>
+                </div>
+            </div>
         </div>
     );
 };
