@@ -45,8 +45,8 @@ export const RRFusionReranker = ai.defineReranker(
         .sort((a, b) => (b.metadata.score ?? 0) - (a.metadata.score ?? 0))
         .slice(0, options?.k || 3);
 
-    return {
-        documents: topK 
-    }
+        return {
+            documents: topK 
+        }
     }
 )

@@ -116,12 +116,14 @@ export const completion = async (req: Request, res: Response) => {
         logger.debug(`RAG step finished with ${docs.length} documents`);
 
         // Completion step  
-        const stream = await CompletionFlow(userUtterance, {
+        const stream = await CompletionFlow({
+            userInput: userUtterance,
+            retrievedDocs: docs
+        }, {
             context: {
                 headers: req.headers,
                 access_token: access_token,
-                citizenId: req.session.citizenId,
-                docs: docs
+                citizenId: req.session.citizenId
             }
         });
 
