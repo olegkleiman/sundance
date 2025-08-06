@@ -1,6 +1,6 @@
 // 
 // 
-// VoiceChat.ts
+// VoiceChat.jsx
 // Sundance project, client side
 //
 // Created by: Oleg Kleiman on 30/07/2025
@@ -48,31 +48,7 @@ const VoiceChat = () => {
             recognition_ended, 
             recornition_result);
     }, []); // called once after the initial render 
-
-    // const fetchData = async () => {
-    //     if (!transcript) return;
-
-    //     try {
-    //         const data = await initConversation(transcript);
-    //         console.log(data);
-
-    //         completeConversation();
-
-    //         return () => {
-    //             console.log('cleaning up');
-    //         }
-            
-    //     } catch (error) {
-    //         console.error(error);
-    //     }
-
-    // }
-
-    // useEffect( () => { 
-
-    //     fetchData();    
-
-    // }, [transcript])
+ 
 
     const handleKeyPress = (e) => {
         if (e.key === 'Enter' && utterance.trim()) {
@@ -84,6 +60,7 @@ const VoiceChat = () => {
         if (!utterance.trim()) return;
 
         setTranscript(utterance);
+        setUtterance('');
     };      
     
     return (
@@ -132,6 +109,7 @@ const VoiceChat = () => {
                     aria-label="Send message"
                 />
             </div>
+            <div className="text-center text-gray-800 dark:text-white hover:text-blue-500 md:text-lg"></div>
             <div style={{ display: 'flex', gap: '20px', width: '100%' }}>
                 <div style={{ flex: 1 }}>
                     <SearchManager searchText={transcript}/>
