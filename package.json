@@ -14,9 +14,14 @@
     "packages/*"
   ],
   "devDependencies": {
+    "@tailwindcss/cli": "^4.1.11",
+    "@tailwindcss/postcss": "^4.1.11",
+    "autoprefixer": "^10.4.21",
     "concurrently": "^8.2.0",
     "cpy-cli": "^5.0.0",
-    "eslint": "^9.32.0"
+    "eslint": "^9.32.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.11"
   },
   "keywords": [],
   "author": "",

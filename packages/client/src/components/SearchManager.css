@@ -19,30 +19,6 @@
     list-style: none;
 }
 
-.listItemStyle {
-    padding: 16px 0;
-    margin: 0;
-    list-style: none;
-}
-
-.listItemStyle:last-child {
-    border-bottom: none;
-}
-
-.listItemStyle p {
-    margin: 0 0 8px 0;
-    line-height: 1.5;
-}
-
-.listItemStyle a {
-    color: #1976d2;
-    text-decoration: none;
-}
-
-.listItemStyle a:hover {
-    text-decoration: underline;
-}
-
 .noResults {
     color: #666;
     font-style: italic;

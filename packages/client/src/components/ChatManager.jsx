@@ -1,10 +1,10 @@
 // 
-// ChatManager.ts
+// ChatManager.jsx
 // Sundance project, client side
 //
 // Created by: Oleg Kleiman on 30/07/2025
 // 
-
+ 
 import React, { useRef, useEffect, useState } from 'react';
 import { useAuth } from "../context/AuthContext.jsx";
 import config from '../config/config.js';
@@ -129,10 +129,9 @@ const ChatManager = ({ lastMessage }) => {
             console.log('Conversation initialized:', data);
             
             // Start the completion stream
-            const cleanup = await completeConversation();
-            
-            // Return cleanup function
-            return cleanup;
+            await completeConversation();
+            console.log('Conversation completed:', data);
+
         } catch (error) {
             console.error('Error in fetchData:', error);
             setError(error.message || 'An error occurred while processing your request');
@@ -156,10 +155,10 @@ const ChatManager = ({ lastMessage }) => {
 
     return (
         <div className="chat-manager">
-            <h2 className="chatTitle">Chat Conversation</h2>
+            <h2 className="chatTitle">שיחה עם העוזרת אישית</h2>
             {lastMessage && (
                 <div className="user-message">
-                    <strong>You:</strong> {lastMessage}
+                    <strong>המשתמש:</strong> {lastMessage}
                 </div>
             )}
             <div className="ticker-container">
@@ -171,4 +170,4 @@ const ChatManager = ({ lastMessage }) => {
     );
 };
 
-export default ChatManager;
+export default React.memo(ChatManager);

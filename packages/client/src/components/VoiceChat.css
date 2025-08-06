@@ -1,3 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* VoiceChat component styles */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.button.circle-btn {
+    margin: 20px 0;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.button.circle-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
 .input-container {
     position: relative;
     width: 100%;
