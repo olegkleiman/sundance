@@ -2,15 +2,15 @@
 ## Overview
 Sundance is a pluggable, privacy-respecting AI chatbox that integrates:
 
-•	A lightweight browser-based SPA frontend (native JavaScript, no frameworks).
+•	A lightweight browser-based SPA frontend (written in React).
 
-•	A backend built in Node.js + Express.
+•	A backend built in Node.js + Express + Genkit
 
 •	Embedding generation via OpenAI 'text-embedding-3-small' model.
 
 •	RAG-based retrieval from Cosmos DB
 
-•	LLM generation via Gemini 2.5 Pro LLM.
+•	LLM generation via Gemini 2.5 Pro LLM or any other LLM that is supported by Genkit.
 
 •	Access control via JWT authentication validated by a Tel Aviv municipality SSO.
 
@@ -36,7 +36,7 @@ Sundance is a pluggable, privacy-respecting AI chatbox that integrates:
 
 •	Handles with middleware authentication via JWT.
 
-•	Exposes multiple endpoints (the full list is available in the [OpenAPI specification (Swagger)](http://<deploy_host>/api-docs/))
+•	Exposes multiple endpoints (the full list is available in the [OpenAPI specification (Swagger)](http://<deploy_host>:<deploy_port>, like http://localhost:8099/api-docs/))
 
 *  **/ingest** - Ingests website content specified by sitemap.xml for RAG.
 ```javascript
@@ -119,8 +119,8 @@ Sundance is a pluggable, privacy-respecting AI chatbox that integrates:
 ```javascript
 /**
  * @swagger
- * /completion:
- *   get:
+ * /chat/stream_agent:
+ *   post:
  *     summary: Get chat completion response via Server-Sent Events (SSE)
  *     tags: [Chat]
  *     responses:
@@ -135,8 +135,18 @@ Sundance is a pluggable, privacy-respecting AI chatbox that integrates:
  *                 data: {"text":"להלן פרוט החובות שלך..."}
  *     security:
  *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               input:
+ *                 type: string
+ *                 example: מה החוב שלי לארנונה?* 
  */
- ``` 
+``` 
 
 •	Requires JWT bearer token for all endpoints (Authorization: Bearer <token>).
 
@@ -351,14 +361,16 @@ REDIS_HOST_NAME=sundance.redis.cache.windows.net
 REDIS_PORT=6389
 ```
 
-
 ## How to build
-From VS Studio Code:
+From VS Studio Code/Windsurf: <video controls src="How to run Sudance.mov" title="Title"></video>
 
-1. From the project root directory run `npm install` to install dependencies.
-2. From the project root directory run `npm run client:deploy` to compile the client application and copy the bundle.js and other assets into the service's public directory.
-3. Run `npm run server:start` to start the server, or press F5 to start the debugger.
+1. For the first time, install the dependencies. From the project root directory run `npm install` to install the dependencies for all sub-project (workspaces).
+2. From the project root directory run `npm run ui:deploy` to build the client application by `svit` and copy the created bundle and other assets into the serverx's public directory.
+3. Run `npm run server:start` to start the server, 
+ or `npm run start` to start the all the scripts (svit + copy + start express server).
 4. Open the browser and navigate to `http://localhost:8099` to see the client application (index.html).
+Pay attention: we use `svit` only as bundler excluding its modularization facility. Probably it is not the most wize way to use it, but our purpose it to simplify the deployment : we want only one destination for both client and server sides. Actually, with this approarch we need to run webpack as only only one service after the deployment.
+Of course, for client development only we use `svit` in a regular manner.
 
 ## Deployment
 This is Node.js application. It can be deployed to any server that supports Node.js, including MS Azure.

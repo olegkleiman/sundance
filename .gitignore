@@ -4,12 +4,17 @@
 .genkit/servers
 .DS_Store
 
+/packages/ui/node_modules
+/packages/ui/dist/*
+
 /packages/client/node_modules
 /packages/client/public/*.js
 /packages/client/public/*.map
 /packages/client/.env
 /packages/client/.env.*
 
+/packages/server/public/assets
+/packages/server/public/backup
 /packages/server/node_modules
 /packages/server/public/*.js
 /packages/server/public/*.map

@@ -28,7 +28,7 @@ const PORT = process.env.PORT || 8099;
 const HOST = '0.0.0.0'; // Listen on all available network interfaces
 
 app.listen(Number(PORT), HOST, () => {
-  console.info(`✅ Sundance Server is running and accessible at \x1b[4;34m\x1b]8;;http://localhost:${PORT}\x1b\\http://localhost:${PORT}\x1b]8;;\x1b\\\x1b[0m`);
+  console.info(`✅ Sundance Back-End Server is running and its Swagger is accessible at \x1b[4;34m\x1b]8;;http://localhost:${PORT}/api-docs\x1b\\http://localhost:${PORT}/api-docs\x1b]8;;\x1b\\\x1b[0m`);
 });
 
 export default app;

@@ -16,10 +16,70 @@ import { CompletionFlow } from '../flows/completionFlow.js';
 import { ai } from '../genkit.js';
 import { hybridRetriever } from '../retrievers/hybridRetriever.js';
 
+export const stream_agent = async (req: Request, res: Response) => {
+    
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    const closeConnection = () => {
+        if (!res.writableEnded) {
+            res.end();
+            logger.debug(`SSE connection closed for session ${req.sessionID}`);
+        }
+    };
+    req.on('close', closeConnection);
+
+    const input = req.body.input
+    console.log(`User utterance: ${JSON.stringify(input)}\n`);
+
+    try {
+        // RAG step
+        const docs = await ai.retrieve({
+            retriever: hybridRetriever, //use the custom retriever
+            query: input,
+            options: {
+                k: 3,
+                preRerankK: 10,
+                customFilter: "words count > 5",
+            }
+        }); 
+        logger.debug(`RAG step finished with ${docs.length} documents`);
+        
+        // Completion step  
+        const stream = await CompletionFlow({
+            userInput: input,
+            retrievedDocs: docs
+        }, {
+            context: {
+                headers: req.headers,
+                // access_token: access_token,
+                // citizenId: req.session.citizenId
+            }
+        });
+
+        for await (const chunk of stream) {
+            const textContent = chunk.text || '';
+            logger.debug(textContent);
+
+            //res.write(`event:message\ndata: ${textContent}\n\n`);
+            const message = {
+                message: textContent,
+                timestamp: new Date().toISOString()
+            }
+            res.write(`event: chatMessage\ndata: ${JSON.stringify(message)}\n\n`);
+        }        
+    } catch (error) {
+        logger.error(error);
+    } finally {
+        closeConnection();
+    }
+}
 
 /**
  * @swagger
- * /chat//init:
+ * /chat/init:
  *   post:
  *     summary: Initialize a new conversation
  *     tags: [Chat]

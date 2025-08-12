@@ -4,11 +4,14 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "start": "concurrently \"npm run ui:deploy \" \"npm run dev --workspace=server\"",
     "server:start": "npm run dev --workspace=server",
     "server:lint": "npm run lint --workspace=server",
     "server:genkit:ui": "npm run genkit:ui --workspace=server",
-    "dev": "concurrently \"npm run dev --workspace=client\" \"npm run dev --workspace=server\"",
-    "client:deploy": "npm run compile --workspace=client && cpy ./packages/client/public/**/* ./packages/server/public/"
+    "dev": "concurrently \"npm run dev --workspace=ui\" \"npm run dev --workspace=server\"",
+    "ui:deploy": "npm run build --workspace=ui && npx cpy \"./packages/ui/dist/**/*\" ./packages/server/public/ --verbose",
+    "ui:build": "npm run build --workspace=ui",
+    "ui:lint": "npm run lint --workspace=ui"
   },
   "workspaces": [
     "packages/*"
