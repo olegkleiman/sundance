@@ -174,7 +174,7 @@ Cosmos Database id is configured in .env file as COSMOS_DATABASE_ID.
 The Container id is configured in .env file as COSMOS_CONTAINER_ID.
 
 After successful execution the created container looks as follows in Azure Portal:
-![alt text](image-2.png)
+![alt text](media/image-2.png)
 ```
 path: '/embedding',
 dataType: VectorEmbeddingDataType.Float32,
@@ -246,7 +246,7 @@ The system uses [Gemini 2.5 Pro](https://cloud.google.com/vertex-ai/generative-a
 
 [Google Gemini governance policy](https://cloud.google.com/gemini/docs/discover/data-governance) states:
 > Gemini doesn't use your prompts or its responses as data to train its models.
-![alt text](image-1.png)
+![alt text](media/image-1.png)
 
 ## GraphQL Integration
 
@@ -362,7 +362,9 @@ REDIS_PORT=6389
 ```
 
 ## How to build
-From VS Studio Code/Windsurf: <video controls src="How to run Sudance.mov" title="Title"></video>
+From VS Studio Code/Windsurf run the "Debug Full Stack" compound and wait till server id fully loaded and attached to Redis: 
+
+<video controls src="media/How to run Sudance-1.mov" title="How to run Sudance"></video>
 
 1. For the first time, install the dependencies. From the project root directory run `npm install` to install the dependencies for all sub-project (workspaces).
 2. From the project root directory run `npm run ui:deploy` to build the client application by `svit` and copy the created bundle and other assets into the serverx's public directory.
