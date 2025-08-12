@@ -21,11 +21,32 @@
       "console": "integratedTerminal"
     },
     {
-      "name": "Attach to Dev Server (Chrome)",
+      "name": "UI Dev (Vite)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--workspace=ui"],
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Attach Chrome to UI (Vite)",
       "type": "chrome",
       "request": "launch",
-      "url": "http://localhost:8099",
-      "webRoot": "${workspaceFolder}/ui/src"
-    }, 
-  ]
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}/packages/ui",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+        "vite:///*": "${webRoot}/*",
+        "webpack:///src/*": "${webRoot}/src/*",
+        "*/src/*": "${webRoot}/src/*"
+      }
+    }    
+  ],
+  "compounds": [
+    {
+      "name": "Debug Full Stack",
+      "configurations": [ "Debug Server", "UI Dev (Vite)","Attach Chrome to UI (Vite)"]
+    }
+  ]  
 }
