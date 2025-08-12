@@ -39,7 +39,7 @@ export const keywordRetriever = ai.defineRetriever(
             const modelMessages = keywordsResponse.messages.filter( msg => msg.role === "model" );
             const keywordsText = modelMessages[0].content[0].text;
             logger.debug(`Keywords extracted: ${keywordsText}`);
-            if( !keywordsText ) {
+            if( !keywordsText || keywordsText.length === 0 ) {
                 throw new Error('No keywords extracted');
             }
             const keywords = JSON.parse(keywordsText);

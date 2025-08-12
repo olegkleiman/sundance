@@ -69,9 +69,10 @@ const swaggerOptions = {
             },
         },
     },
+    // Scan both TS (dev with tsx) and JS (built) files so Swagger works in dev and prod
     apis: [
-        path.join(__dirname, 'routes/*.ts'),
-        path.join(__dirname, 'controllers/*.ts'),
+        path.join(__dirname, 'routes/*.{ts,js}'),
+        path.join(__dirname, 'controllers/*.{ts,js}'),
     ],
 };
 

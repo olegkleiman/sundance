@@ -9,27 +9,6 @@ import { Document } from 'genkit/retriever';
 import { Request, Response } from 'express';
 import { SearchFlow } from '../flows/searchFlow.js';
 
-/**
- * @swagger
- * /chat/search:
- *   post:
- *     summary: Search for relevant documents
- *     tags: [Chat]
- *     responses:
- *       200:
- *         description: Success 
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               data:
- *                 type: string
- *                 example: חוזה שכירות מומלץ
- */
-
 export const search = async(req: Request, res: Response) => {
     try {
         const docs: Document[] = await SearchFlow(req.body.data);

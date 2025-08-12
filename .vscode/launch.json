@@ -6,7 +6,7 @@
       "request": "launch",
       "name": "Debug Server",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--workspace=server"],
+      "runtimeArgs": ["run", "server:start"],
       "cwd": "${workspaceFolder}",
       "skipFiles": [
         "<node_internals>/**",
@@ -19,6 +19,13 @@
         "PORT": "8099"
       },
       "console": "integratedTerminal"
-    }
+    },
+    {
+      "name": "Attach to Dev Server (Chrome)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:8099",
+      "webRoot": "${workspaceFolder}/ui/src"
+    }, 
   ]
 }
