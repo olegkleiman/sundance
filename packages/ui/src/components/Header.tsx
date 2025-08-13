@@ -13,8 +13,9 @@ const Header = () => {
           rel="noopener noreferrer"
           aria-label="Tavily Website"
         >
-        <RiLoginCircleFill size={40} className="text-[#468BFF]" />
-
+          <div className="p-2 bg-[#468BFF] rounded-lg hover:bg-[#8FBCFA] transition-colors cursor-pointer shadow-md">
+            <RiLoginCircleFill className="text-white h-6 w-6" />
+          </div>
         </a>
       </div>
 

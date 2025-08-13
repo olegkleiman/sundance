@@ -27,8 +27,8 @@ const AgentTypeSelector: React.FC<AgentTypeSelectorProps> = ({
               Hybrid Search 
             </div>
             <p className="text-gray-600 text-center leading-relaxed">
-              powered by CosmosDB, OpenAI Enbeddings, Reciprocal Rank Fusion (RRF) and BM25 algorithms
-              t
+              Powered by CosmosDB, OpenAI Embeddings, Reciprocal Rank Fusion (RRF), and BM25 algorithms
+              performs initial RAG step
             </p>
           </div>
         </button>
@@ -43,7 +43,7 @@ const AgentTypeSelector: React.FC<AgentTypeSelectorProps> = ({
               Chart
             </div>
             <p className="text-gray-600 text-center leading-relaxed">
-              based on Dynamic RAG, Gengin plugged with Gemini LLM and the tooling arround corporarte GraphQL
+            Genkit/LangChain step based on previous RAG, plugs Gemini LLM and the tools around corporate GraphQL
             </p>
           </div>
         </button>
