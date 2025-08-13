@@ -48,7 +48,7 @@
   "compounds": [
     {
       "name": "Debug Full Stack",
-      "configurations": [ "Debug Server", "UI Dev (Vite)","Attach Chrome to UI (Vite)"]
+      "configurations": ["Debug Server","UI Dev (Vite)","Attach Chrome to UI (Vite)"]
     }
   ]  
 }
