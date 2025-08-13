@@ -1,6 +1,7 @@
 
-import { BookOpen, Github, Home } from "lucide-react";
+import { BookOpen, Home } from "lucide-react";
 import { RiLoginCircleFill } from "react-icons/ri";
+import { FaGithub } from "react-icons/fa";  // Font Awesome GitHub icon
 
 const Header = () => {
   return (
@@ -39,7 +40,7 @@ const Header = () => {
           aria-label="SunDance Chat"
         >
           <div className="p-2 bg-[#FE363B] rounded-lg hover:bg-[#FF9A9D] transition-colors cursor-pointer shadow-md">
-            <Github className="text-white h-6 w-6" />
+            <FaGithub className="text-white h-6 w-6" />
           </div>
         </a>
         <a

@@ -364,7 +364,7 @@ REDIS_PORT=6389
 ## How to build
 From VS Studio Code/Windsurf run the "Debug Full Stack" compound and wait till server id fully loaded and attached to Redis: 
 
-<video controls src="media/How to run Sudance-1.mov" title="How to run Sudance"></video>
+<video controls src="media/How_to_debug_Sundance.gif" title="How to run Sudance"></video>
 
 1. For the first time, install the dependencies. From the project root directory run `npm install` to install the dependencies for all sub-project (workspaces).
 2. From the project root directory run `npm run ui:deploy` to build the client application by `vite` and copy the created bundle and other assets into the serverx's public directory.
