@@ -1,6 +1,6 @@
-# Sundance - plugable AI chatbox
+# Sundance - pluggable AI chatbox
 ## Overview
-Sundance is a pluggable, privacy-respecting AI chatbox that integrates:
+Sundance is a pluggable, privacy-respecting AI chatbot that integrates:
 
 •	A lightweight browser-based SPA frontend (written in React).
 
@@ -16,7 +16,7 @@ Sundance is a pluggable, privacy-respecting AI chatbox that integrates:
 
 ## Components
 
-### 1. Frontend  (Client)
+### 1. Frontend (Client)
 
 * Served as React SPA on index.html that parsed by Vite dynamically by 
 * After the login that implemented in SignIn component, the user is redirected to the chat page.
@@ -168,7 +168,7 @@ Sundance is a pluggable, privacy-respecting AI chatbox that integrates:
     * Receive the response from the LLM.
 
 ## Cosmos DB embedding search logic
-1. At module level, the Azure Cosmos DB database and container are created if they do not exist.
+1. At the module level, the Azure Cosmos DB database and container are created if they do not exist.
 
 Cosmos Database id is configured in .env file as COSMOS_DATABASE_ID.
 The Container id is configured in .env file as COSMOS_CONTAINER_ID.
@@ -381,22 +381,21 @@ Front-end HTML page (index.html) is available once the node app is running.
 When running for the first time, the page requests the permissions to use microphone, camera, and geolocation on the user's device. 
 
 ### How to use
-1. Ensure that Azure Cosmos DB account is exists.
-Its connection string is defined in the .env file in the two variables: 
+1. Ensure that Azure Cosmos DB account exists and connection string is defined in the .env file in the two variables: 
 ```
 COSMOS_CLIENT_URL=https://<account_name>.documents.azure.com:443/
 COSMOS_CLIENT_KEY=<xxx>
 ```
-2. Start the server by running `npm run start`.
+2. Start the server by running `npm run server:start`.
 3. Invoke the indexer endpoint by issuing a POST request to `/ingest` endpoint
 
-This creates the Azure Cosmos database, and container. Development configuration assumes the container 'chunks' and the database 'danceN'.
+This creates the Azure Cosmos database, and container. Development configuration assumes the container 'chunks' and the database 'tel-aviv.gov.il' as the name of the site that has been parsed.
 
-3. Aquire access token (JWT) Any call to Sundance server should include the access token in the Authorization header (e.g. `Authorization: Bearer <access_token>`).
+3. Acquire access token (JWT). Any call to Sundance server should include the access token in the Authorization header (e.g. `Authorization: Bearer <access_token>`).
 
 The tokens are validated against the TOKEN_VALIDATION_URL (e.g. `https://api.tel-aviv.gov.il/sso/validate_token`) endpoint.
 
-4. Issue htpp POST to /completion endpoint with this JWT and JSON like:
+4. Issue HTTP POST to /completion endpoint with this JWT and JSON like:
 ```json
 {
     "data": "מה החוב שלי לארנונה?"
@@ -408,8 +407,7 @@ The tokens are validated against the TOKEN_VALIDATION_URL (e.g. `https://api.tel
 ### Notes on RAG
 Cosmos DB is used to store the embeddings of the text content of the website. The embeddings are then used to find the most similar documents to the user's query.
 Connection string to the DB is defined in the .env file.
-This project uses OpenAI 'text-embedding-3-small' model for text embeddings.
-
+This project uses OpenAI's 'text-embedding-3-small' model for text embeddings.
 
 ## File Structure
 
