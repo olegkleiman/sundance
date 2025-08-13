@@ -15,6 +15,8 @@
       "sourceMaps": true,
       "outFiles": ["${workspaceFolder}/**/*.js"],
       "env": {
+        "DEBUG": "genkit:*",
+        "DEBUG_COLORS": "true",
         "NODE_ENV": "development",
         "PORT": "8099"
       },

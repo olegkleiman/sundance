@@ -14,6 +14,7 @@
 /packages/client/.env.*
 
 /packages/server/public/assets
+/packages/server/public/index.html
 /packages/server/public/backup
 /packages/server/node_modules
 /packages/server/public/*.js

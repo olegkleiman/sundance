@@ -109,10 +109,6 @@ function App() {
   const [threadId, setThreadId] = useState<string | null>(null);
   const [selectedAgentType, setSelectedAgentType] = useState<string | null>(null);
 
-  const [apiKey, setApiKey] = useState<string>();
-  const [showApiKeyDropdwown, setShowApiKeyDropdwown] =
-    useState<boolean>(true); // Always show API key dropdown since JWT is removed
-
   console.log("App render - messages:", messages);
   console.log("App render - messages.length:", messages.length);
   console.log("App render - should show ChatUI:", messages.length > 0);
@@ -155,12 +151,6 @@ function App() {
 
   const fetchStreamingData = async (query: string) => {
     setRecapMessage("");
-    if (!apiKey) {
-      updateLastMessageResponse({
-        error: "No API key provided. Cannot chat",
-      });
-      return;
-    }
     const id = threadId || cuid();
     if (!threadId) {
       setThreadId(id);
@@ -178,7 +168,6 @@ function App() {
         headers: {
           "Content-Type": "application/json",
           accept: "application/json",
-          Authorization: apiKey,
         },
         body: JSON.stringify({
           input: query,
@@ -554,7 +543,7 @@ function App() {
 
   return (
     <>
-      <div className="min-h-screen w-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white via-gray-50 to-white relative">
+      <div className="min-h-screen bg-neutral-900">
         <div className="absolute inset-0 w-full h-full bg-[radial-gradient(circle_at_1px_1px,rgba(70,139,255,0.35)_1px,transparent_0)] bg-[length:24px_24px] bg-center"></div>
         <Header />
         <div className="max-w-5xl mx-auto space-y-8 relative">
@@ -563,10 +552,6 @@ function App() {
           ) : !messages.length ? (
             <ChatStart
               onSubmit={submitMessage}
-              apiKey={apiKey}
-              setApiKey={setApiKey}
-              showApiKeyDropdwown={showApiKeyDropdwown}
-              setShowApiKeyDropdwown={setShowApiKeyDropdwown}
               agentType={selectedAgentType || "fast"}
             />
           ) : (
