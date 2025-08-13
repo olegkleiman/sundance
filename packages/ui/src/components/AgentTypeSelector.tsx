@@ -24,10 +24,11 @@ const AgentTypeSelector: React.FC<AgentTypeSelectorProps> = ({
         >
           <div className="flex flex-col items-center justify-center h-full p-6">
             <div className="text-4xl font-semibold text-[#468BFF] group-hover:text-[#468BFF] mb-4">
-              Fast Inference
+              Hybrid Search 
             </div>
             <p className="text-gray-600 text-center leading-relaxed">
-              for immediate answers
+              powered by CosmosDB, OpenAI Enbeddings, Reciprocal Rank Fusion (RRF) and BM25 algorithms
+              t
             </p>
           </div>
         </button>
@@ -39,10 +40,10 @@ const AgentTypeSelector: React.FC<AgentTypeSelectorProps> = ({
         >
           <div className="flex flex-col items-center justify-center h-full p-6">
             <div className="text-4xl font-semibold text-[#468BFF] group-hover: mb-4">
-              Reasoning
+              Chart
             </div>
             <p className="text-gray-600 text-center leading-relaxed">
-              for deeper insights
+              based on Dynamic RAG, Gengin plugged with Gemini LLM and the tooling arround corporarte GraphQL
             </p>
           </div>
         </button>
