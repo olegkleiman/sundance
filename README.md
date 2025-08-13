@@ -18,7 +18,7 @@ Sundance is a pluggable, privacy-respecting AI chatbox that integrates:
 
 ### 1. Frontend  (Client)
 
-* Served as React SPA on index.html.
+* Served as React SPA on index.html that parsed by Vite dynamically by 
 * After the login that implemented in SignIn component, the user is redirected to the chat page.
 * Chat Page prompts for microphone, camera, geolocation permissions on load.
 * Present the microphone icon that starts the Voice Recognition with browser build-in [speech recognition API](https://developer.mozilla.org/en-US/docs/Web/API/SpeechRecognition).
@@ -367,12 +367,12 @@ From VS Studio Code/Windsurf run the "Debug Full Stack" compound and wait till s
 <video controls src="media/How to run Sudance-1.mov" title="How to run Sudance"></video>
 
 1. For the first time, install the dependencies. From the project root directory run `npm install` to install the dependencies for all sub-project (workspaces).
-2. From the project root directory run `npm run ui:deploy` to build the client application by `svit` and copy the created bundle and other assets into the serverx's public directory.
+2. From the project root directory run `npm run ui:deploy` to build the client application by `vite` and copy the created bundle and other assets into the serverx's public directory.
 3. Run `npm run server:start` to start the server, 
- or `npm run start` to start the all the scripts (svit + copy + start express server).
+ or `npm run start` to start the all the scripts (vite + copy + start express server).
 4. Open the browser and navigate to `http://localhost:8099` to see the client application (index.html).
-Pay attention: we use `svit` only as bundler excluding its modularization facility. Probably it is not the most wize way to use it, but our purpose it to simplify the deployment : we want only one destination for both client and server sides. Actually, with this approarch we need to run webpack as only only one service after the deployment.
-Of course, for client development only we use `svit` in a regular manner.
+Pay attention: we use `vite` only as bundler excluding its modularization facility. Probably it is not the most wize way to use it, but our purpose it to simplify the deployment : we want only one destination for both client and server sides. Actually, with this approarch we need to run webpack as only only one service after the deployment.
+Of course, for client development only we use `vite` in a regular manner.
 
 ## Deployment
 This is Node.js application. It can be deployed to any server that supports Node.js, including MS Azure.
