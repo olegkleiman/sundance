@@ -543,7 +543,7 @@ function App() {
 
   return (
     <>
-      <div className="min-h-screen bg-neutral-900">
+      <div className="min-h-screen w-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white via-gray-50 to-white relative">
         <div className="absolute inset-0 w-full h-full bg-[radial-gradient(circle_at_1px_1px,rgba(70,139,255,0.35)_1px,transparent_0)] bg-[length:24px_24px] bg-center"></div>
         <Header />
         <div className="max-w-5xl mx-auto space-y-8 relative">

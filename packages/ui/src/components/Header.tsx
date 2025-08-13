@@ -1,9 +1,10 @@
 
 import { BookOpen, Github, Home } from "lucide-react";
+import { RiLoginCircleFill } from "react-icons/ri";
 
 const Header = () => {
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-6 bg-none">
+    <div className="fixed top-0 left-0 right-0 z-50 flex   items-center justify-between p-6 bg-none">
       {/* Logo Section */}
       <div className="flex items-center">
         <a
@@ -12,11 +13,8 @@ const Header = () => {
           rel="noopener noreferrer"
           aria-label="Tavily Website"
         >
-          <img
-            src="/tavilylogo.png"
-            alt="Tavily Logo"
-            className="h-10 w-auto"
-          />
+        <RiLoginCircleFill size={40} className="text-[#468BFF]" />
+
         </a>
       </div>
 
@@ -34,10 +32,10 @@ const Header = () => {
           </div>
         </a>
         <a
-          href="https://github.com/tavily-ai/tavily-chat"
+          href="https://github.com/olegkleiman/sundance"
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="Tavily GitHub"
+          aria-label="SunDance Chat"
         >
           <div className="p-2 bg-[#FE363B] rounded-lg hover:bg-[#FF9A9D] transition-colors cursor-pointer shadow-md">
             <Github className="text-white h-6 w-6" />
