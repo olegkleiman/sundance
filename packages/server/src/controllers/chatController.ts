@@ -16,6 +16,43 @@ import { CompletionFlow } from '../flows/completionFlow.js';
 import { ai } from '../genkit.js';
 import { hybridRetriever } from '../retrievers/hybridRetriever.js';
 
+export const stream_chunks = async (req: Request, res: Response) => {
+    res.setHeader("Content-Type", "text/plain");
+    res.setHeader("Transfer-Encoding", "chunked");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders();
+    
+    const input = req.body.input
+    console.log(`User utterance: ${JSON.stringify(input)}\n`);
+
+    try {
+        const stream = await getLLMStream(input);
+
+        for await (const chunk of stream) {
+            const textContent = chunk.text || '';
+            logger.debug('Sending chunk:', textContent);
+
+            // Write the chunk with proper formatting
+            const payload = {
+                type: 'chatbot',
+                content: textContent
+            }
+            res.write(`${JSON.stringify(payload)}\n`);       
+        }
+    } catch (error) {
+        logger.error(error);
+    } finally {
+        res.end();
+    }
+
+    // res.write("Hello");
+    // setTimeout(() => {
+    //     res.write(" World");
+    //     res.end("!");
+    //   }, 2000);
+}
+
 export const stream_agent = async (req: Request, res: Response) => {
     
     res.setHeader('Content-Type', 'text/event-stream');
@@ -75,6 +112,34 @@ export const stream_agent = async (req: Request, res: Response) => {
     } finally {
         closeConnection();
     }
+}
+
+const getLLMStream = async (input: string) => {
+         // RAG step
+         const docs = await ai.retrieve({
+            retriever: hybridRetriever, //use the custom retriever
+            query: input,
+            options: {
+                k: 3,
+                preRerankK: 10,
+                customFilter: "words count > 5",
+            }
+        }); 
+        logger.debug(`RAG step finished with ${docs.length} documents`);
+        
+        // Completion step  
+        const stream = await CompletionFlow({
+            userInput: input,
+            retrievedDocs: docs
+        }, {
+            context: {
+                // headers: req.headers,
+                // access_token: access_token,
+                // citizenId: req.session.citizenId
+            }
+        });
+        
+        return stream;
 }
 
 /**

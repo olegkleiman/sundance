@@ -163,7 +163,7 @@ function App() {
     });
 
     try {
-      const response = await fetch(`${BASE_URL}/chat/stream_agent`, {
+      const response = await fetch(`${BASE_URL}/chat/stream_chunks`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -500,7 +500,8 @@ function App() {
         buffer = lines.pop() || "";
 
         for (const line of lines) {
-          if (!line.trim()) continue;
+          if (!line.trim()) 
+            continue;
 
           try {
             const data = JSON.parse(line.trim());

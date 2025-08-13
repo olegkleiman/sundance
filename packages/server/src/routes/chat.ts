@@ -6,7 +6,7 @@
 // 
 
 import express from 'express';
-import { completion, init, stream_agent } from '../controllers/chatController.js';
+import { completion, init, stream_agent, stream_chunks } from '../controllers/chatController.js';
 import { search } from '../controllers/searchController.js';
 import { ingest } from '../controllers/ingestController.js';
 
@@ -93,5 +93,36 @@ router.post('/search', search);
  *                 example: מה החוב שלי לארנונה?* 
  */
 router.post('/stream_agent', stream_agent);
+
+/**
+ * @swagger
+ * /chat/stream_agent:
+ *   post:
+ *     summary: Get chat completion response via HTTP chunks
+ *     tags: [Chat]
+ *     responses:
+ *       200:
+ *         description: Success
+ *         content:
+ *           text/event-stream:
+ *             schema:
+ *               type: string
+ *               example: |
+ *                 event: message
+ *                 data: {"text":"להלן פרוט החובות שלך..."}
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               input:
+ *                 type: string
+ *                 example: מה החוב שלי לארנונה?* 
+ */
+router.post('/stream_chunks', stream_chunks);
 
 export default router;
