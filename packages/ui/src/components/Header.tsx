@@ -27,13 +27,14 @@ const Header = () => {
     // Get form data
     const formData = new FormData(formRef.current || undefined);
     const data = {
-      userId: formData.get('citizenId'),
+      otp: formData.get('otp'),
       phoneNumber: formData.get('phoneNumber'),
-      clientId: "83f54a45-6065-4a91-975b-447a3afc570e",
     };
 
     try {
-      const response = await fetch('https://apimtlvppr.tel-aviv.gov.il/sso/request_otp', {
+      const login_url = `${import.meta.env.VITE_BACKEND_URL}/auth/login`
+      console.log('Login URL:', login_url);
+      const response = await fetch(login_url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -83,10 +84,10 @@ const Header = () => {
                 className="space-y-4"
               >
                 <input 
-                  name="citizenId"
+                  name="otp"
                   type="text" 
-                  placeholder="Citizen ID"
-                  defaultValue="313069486"
+                  placeholder="OTP"
+                  defaultValue="777"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
                   required
                 />

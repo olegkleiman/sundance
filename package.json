@@ -9,8 +9,10 @@
     "server:lint": "npm run lint --workspace=server",
     "server:genkit:ui": "npm run genkit:ui --workspace=server",
     "dev": "concurrently \"npm run dev --workspace=ui\" \"npm run dev --workspace=server\"",
+    "ui:clean": "rimraf ./packages/server/public/assets/*",
     "ui:deploy": "npm run build --workspace=ui && npx cpy \"./packages/ui/dist/**/*\" ./packages/server/public/ --verbose",
     "ui:build": "npm run build --workspace=ui",
+    "ui:dev": "npm run dev --workspace=ui",
     "ui:lint": "npm run lint --workspace=ui",
     "ui:preview": "npm run preview --workspace=ui"
   },
@@ -25,6 +27,7 @@
     "cpy-cli": "^5.0.0",
     "eslint": "^9.32.0",
     "postcss": "^8.5.6",
+    "rimraf": "^6.0.1",
     "tailwindcss": "^4.1.11"
   },
   "keywords": [],

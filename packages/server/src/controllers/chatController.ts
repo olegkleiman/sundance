@@ -45,12 +45,6 @@ export const stream_chunks = async (req: Request, res: Response) => {
     } finally {
         res.end();
     }
-
-    // res.write("Hello");
-    // setTimeout(() => {
-    //     res.write(" World");
-    //     res.end("!");
-    //   }, 2000);
 }
 
 export const stream_agent = async (req: Request, res: Response) => {
