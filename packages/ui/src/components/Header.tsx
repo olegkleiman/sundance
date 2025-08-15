@@ -2,23 +2,19 @@ import React, { useState, useRef, useEffect } from "react";
 import { BookOpen, Home } from "lucide-react";
 import { RiLoginCircleFill } from "react-icons/ri";
 import { FaGithub } from "react-icons/fa";
+import { useAuth } from "../context/AuthContext.jsx";
 import Cookies from "js-cookie";
-import { jwtDecode, JwtPayload } from "jwt-decode";
-
-interface CustomJwtPayload extends JwtPayload {
-  name?: string;
-  // Add other custom claims here if needed
-}
 
 const Header = () => {
   const [showLogin, setShowLogin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [userName, setUserName] = useState<string | undefined>(undefined);
 
   const loginRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+
+  // Safely get auth context
+  const auth = useAuth();
 
   // Close the login popup when clicking outside
   useEffect(() => {
@@ -34,19 +30,11 @@ const Header = () => {
 
   useEffect(() => {
     const accessToken = Cookies.get('access_token');
-    console.log('Access token:', accessToken);
+    console.log('Access token read from cookies:', accessToken);
+
     if( accessToken) {
-      const decodedJwt = jwtDecode<CustomJwtPayload>(accessToken);
-      console.log('Decoded JWT:', decodedJwt);
-
-      // Parse claims
-      const userName = decodedJwt.name;
-      setUserName(userName);
-      console.log('User name:', userName);
-
       // TODO: Validate stored JWT
-
-      setIsAuthenticated(true);
+      auth.login(accessToken);
     }
   }, []);
 
@@ -91,22 +79,29 @@ const Header = () => {
     }
   };
 
+  // const handleLogout = () => {
+  //   Cookies.remove('access_token');
+  //   auth.logout();
+
+  //   setShowLogin(true);
+  // };
+
   console.log('Rendering form, showLogin:', showLogin);
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-6 bg-none">
       {/* Login Section */}
       <div className="flex items-center relative" ref={loginRef}>
-        {!isAuthenticated && <div 
+        {!auth.isAuthenticated && <div 
             onClick={() => setShowLogin(!showLogin)}
             className="p-2 bg-[#468BFF] rounded-lg hover:bg-[#8FBCFA] transition-colors cursor-pointer shadow-md"
           >
             <RiLoginCircleFill className="text-white h-6 w-6" />
           </div>
         }
-        { isAuthenticated && (
+        { auth.isAuthenticated && (
           <div className="p-2 bg-[#468BFF] rounded-lg hover:bg-[#8FBCFA] transition-colors cursor-pointer shadow-md">
-            <div className="text-white h-6">Hello {userName}</div>
+            <div className="text-white h-6">Hello {auth.userName()}</div>
           </div>
         )}
 

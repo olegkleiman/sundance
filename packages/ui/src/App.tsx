@@ -5,6 +5,7 @@ import AgentTypeSelector from "./components/AgentTypeSelector";
 import cuid from "cuid";
 import { ConversationType } from "./common/enums";
 import Header from "./components/Header";
+import { useAuth } from "./context/AuthContext";
 
 export interface SearchResult {
   url: string;
@@ -113,6 +114,8 @@ function App() {
   console.log("App render - messages.length:", messages.length);
   console.log("App render - should show ChatUI:", messages.length > 0);
 
+  const auth = useAuth();
+
   const submitMessage = async (input: string) => {
     const message = { userMessage: input };
     setMessages((prev) => [...prev, message]);
@@ -168,6 +171,7 @@ function App() {
         headers: {
           "Content-Type": "application/json",
           accept: "application/json",
+          authorization: `Bearer ${auth.getToken()}`,
         },
         body: JSON.stringify({
           input: query,
