@@ -52,8 +52,8 @@ export const login = [
             throw new Error('Failed to login');
         }
 
-        const loginData = await loginResponse.json();
-        setCookie(res, loginData.id_token);
+        const loginData : LoginResponse = await loginResponse.json();
+        setCookie(res, loginData);
 
         await redisClient.hSet(`${phoneNumber}`, {
             refresh_token: loginData.refresh_token,
@@ -140,12 +140,27 @@ export const refresh_token  =
     }
 }
 
-const setCookie = (res: Response, token: string) => {
-    res.cookie('access_token', token, {
-        httpOnly: true,
+interface LoginResponse {
+    access_token: string;
+    expires_in: string;
+    refresh_token: string;
+    id_token?: string; 
+    sso_token?: string;
+    token_type: string;
+}
+
+const setCookie = (res: Response, loginData: LoginResponse) => {
+    res.cookie('access_token', loginData.access_token, {
+        httpOnly: false,
         secure: true,      // Only sent over HTTPS
         sameSite: 'strict', // Prevent CSRF,
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    })
+    res.cookie('refresh_token', loginData.refresh_token, {
+        httpOnly: false,
+        secure: true,      // Only sent over HTTPS
+        sameSite: 'strict', // Prevent CSRF,
+        maxAge:30 * 24 * 60 * 60 * 1000, // 30 days     
     })
 }
 
