@@ -30,6 +30,9 @@ Sundance is a pluggable, privacy-respecting AI chatbot that integrates:
 * The LLM sends the response to the frontend via HTTP GET request to /completion endpoint.
 * The frontend displays the response in the animated running line below the shown user input.
 
+![alt text](media/chat_home_screen.png)
+![alt text](media/chat.png)
+
 ### 2. Backend (Server)
 
 •	Built with Node.js, Express.js, and Genkit that may be used with various plugins  - Gemini, OpenAI etc.

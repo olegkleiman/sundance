@@ -16,14 +16,14 @@
     const getSuggestedQueries = (type: string) => {
       if (type === "fast") {
         return [
-          "Current weather in San Francisco",
-          "Recent news in NYC",
+          "Current weather in Tel-Aviv",
+          "Recent news in Israel",
           "What are the newest AI models?",
         ];
       } else {
         return [
-          "Create a report summarizing Tavily's recent blog posts",
-          "Find all developer docs on Tavily's website ",
+          "Create a report summarizing OpenAI's recent blog posts",
+          "Find all developer docs on OpenAI's website ",
         ];
       }
     };
