@@ -96,7 +96,7 @@ router.post('/stream_agent', stream_agent);
 
 /**
  * @swagger
- * /chat/stream_agent:
+ * /chat/stream_chunks:
  *   post:
  *     summary: Get chat completion response via HTTP chunks
  *     tags: [Chat]

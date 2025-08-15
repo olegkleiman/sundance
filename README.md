@@ -117,8 +117,9 @@ Sundance is a pluggable, privacy-respecting AI chatbot that integrates:
  *                 type: string
  *                 example: מה החוב שלי לארנונה?
  */
-``` 
-* ***/completion** - Performs the RAG step by a help of hybridRetriever. Sends the stored in session user's input in the context of the documents received on RAG step.
+
+
+*  **/stream_agent** - Get chat completion response via Server-Sent Events (SSE)
 ```javascript
 /**
  * @swagger
@@ -150,6 +151,38 @@ Sundance is a pluggable, privacy-respecting AI chatbot that integrates:
  *                 example: מה החוב שלי לארנונה?* 
  */
 ``` 
+
+```javascript
+/**
+ * @swagger
+ * /chat/stream_chunks:
+ *   post:
+ *     summary: Get chat completion response via HTTP chunks
+ *     tags: [Chat]
+ *     responses:
+ *       200:
+ *         description: Success
+ *         content:
+ *           text/event-stream:
+ *             schema:
+ *               type: string
+ *               example: |
+ *                 event: message
+ *                 data: {"text":"להלן פרוט החובות שלך..."}
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               input:
+ *                 type: string
+ *                 example: מה החוב שלי לארנונה?* 
+ */
+```
 
 •	Requires JWT bearer token for all endpoints (Authorization: Bearer <token>).
 
