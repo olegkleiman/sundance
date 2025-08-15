@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { BookOpen, Home } from "lucide-react";
 import { RiLoginCircleFill } from "react-icons/ri";
 import { FaGithub } from "react-icons/fa";
@@ -13,9 +13,27 @@ const Header = () => {
 
   const loginRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const homeButtonRef = useRef<HTMLAnchorElement>(null);
 
   // Safely get auth context
   const auth = useAuth();
+
+  // Handle keyboard shortcuts
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // Cmd/Ctrl + H for Home
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'h') {
+      e.preventDefault();
+      homeButtonRef.current?.click(); 
+    }
+  }, []);
+
+  useEffect(() => {
+    // Add keyboard event listener
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleKeyDown]);
 
   // Close the login popup when clicking outside
   useEffect(() => {
@@ -104,9 +122,12 @@ const Header = () => {
       <div className="flex items-center relative" ref={loginRef}>
         {!auth.isAuthenticated && <div 
             onClick={() => setShowLogin(!showLogin)}
-            className="p-2 bg-[#468BFF] rounded-lg hover:bg-[#8FBCFA] transition-colors cursor-pointer shadow-md"
+            className="p-2 bg-[#468BFF] rounded-lg transition-colors cursor-pointer shadow-md relative group"
           >
             <RiLoginCircleFill className="text-white h-6 w-6" />
+            <span className={`invisible ${!showLogin && 'group-hover:visible opacity-0 group-hover:opacity-100'} transition-opacity absolute left-full top-1/2 transform -translate-y-1/2 ml-2 px-2 py-1 text-sm bg-white rounded whitespace-nowrap border border-gray-200`}>
+              Log In
+            </span>
           </div>
         }
         { auth.isAuthenticated && (
@@ -191,13 +212,18 @@ const Header = () => {
       <div className="flex space-x-4">
         {/* Your existing icons */}
         <a
-          href="https://app.tavily.com/home"
-          target="_blank"
+          ref={homeButtonRef}
+          href={`${import.meta.env.VITE_BACKEND_URL.replace('api', '')}`}
           rel="noopener noreferrer"
-          aria-label="Home"
+          aria-label="Home (⌘H or Ctrl+H)"
+          className="relative group"
+          title="⌘H or Ctrl+H"
         >
           <div className="p-2 bg-[#468BFF] rounded-lg hover:bg-[#8FBCFA] transition-colors cursor-pointer shadow-md">
             <Home className="text-white h-6 w-6" />
+            <span className="invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 text-sm bg-white text-gray-800 rounded whitespace-nowrap border border-gray-200">
+Home (⌘H or Ctrl+H)
+            </span>
           </div>
         </a>
         <a
@@ -205,19 +231,27 @@ const Header = () => {
           target="_blank"
           rel="noopener noreferrer"
           aria-label="GitHub Repository"
+          className="relative group"
         >
           <div className="p-2 bg-[#FE363B] rounded-lg hover:bg-[#FF9A9D] transition-colors cursor-pointer shadow-md">
             <FaGithub className="text-white h-6 w-6" />
+            <span className="invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 text-sm bg-white text-gray-800 rounded whitespace-nowrap border border-gray-200">
+              GitHub Repository
+            </span>
           </div>
         </a>
         <a
-          href="https://docs.tavily.com"
+          href={`${import.meta.env.VITE_BACKEND_URL.replace('api', 'api-docs')}`}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="Documentation"
+          aria-label="API Documentation"
+          className="relative group"
         >
           <div className="p-2 bg-[#FDBB11] rounded-lg hover:bg-[#F6D785] transition-colors cursor-pointer shadow-md">
             <BookOpen className="text-white h-6 w-6" />
+            <span className="invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 text-sm bg-white text-gray-800 rounded whitespace-nowrap border border-gray-200">
+              API Documentation
+            </span>
           </div>
         </a>
       </div>
