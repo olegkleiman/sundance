@@ -7,6 +7,7 @@ import Cookies from "js-cookie";
 
 const Header = () => {
   const [showLogin, setShowLogin] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,6 +35,14 @@ const Header = () => {
 
     if( accessToken) {
       // TODO: Validate stored JWT
+      // const validationUrl = 'https://apimtlvppr.tel-aviv.gov.il/sso/validate_token'
+      // const response = await fetch(validationUrl, {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     'Authorization': `Bearer ${accessToken}`
+      //   }
+      // });
       auth.login(accessToken);
     }
   }, []);
@@ -70,7 +79,9 @@ const Header = () => {
       const result = await response.json();
       console.log('Login successful:', result);
 
+      auth.login(result.access_token);
       setShowLogin(false);
+      setShowUserMenu(false);
 
     } catch (error) {
       console.error('Login error:', error);
@@ -79,12 +90,11 @@ const Header = () => {
     }
   };
 
-  // const handleLogout = () => {
-  //   Cookies.remove('access_token');
-  //   auth.logout();
-
-  //   setShowLogin(true);
-  // };
+  const handleLogout = (e: React.FormEvent) => {
+    e.preventDefault();
+    Cookies.remove('access_token');
+    auth.logout();
+  };
 
   console.log('Rendering form, showLogin:', showLogin);
 
@@ -100,8 +110,35 @@ const Header = () => {
           </div>
         }
         { auth.isAuthenticated && (
-          <div className="p-2 bg-[#468BFF] rounded-lg hover:bg-[#8FBCFA] transition-colors cursor-pointer shadow-md">
-            <div className="text-white h-6">Hello {auth.userName()}</div>
+          <div 
+            className="relative"
+            onMouseEnter={() => setShowUserMenu(true)}
+            onMouseLeave={() => setShowUserMenu(false)}
+          >
+            <div className="p-2 bg-[#468BFF] rounded-lg hover:bg-[#8FBCFA] transition-colors cursor-pointer shadow-md">
+              <div className="text-white h-6 underline-offset-2 hover:underline">Hello {auth.userName()}</div>
+            </div>
+            {showUserMenu && (
+              <div className="absolute left-0 mt-1 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                <a
+                  href="#"
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    // Handle profile click
+                  }}
+                >
+                  Profile
+                </a>
+                <a
+                  href="#"
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  onClick={handleLogout}
+                >
+                  Log Out
+                </a>
+              </div>
+            )}
           </div>
         )}
 
@@ -123,7 +160,6 @@ const Header = () => {
                   name="otp"
                   type="text" 
                   placeholder="OTP"
-                  defaultValue="777"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" 
                   required
                   disabled={isLoading}
