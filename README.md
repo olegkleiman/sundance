@@ -368,11 +368,14 @@ From VS Studio Code/Windsurf run the "Debug Full Stack" compound and wait till s
 
 
 1. For the first time, install the dependencies. From the project root directory run `npm install` to install the dependencies for all sub-project (workspaces).
-2. From the project root directory run `npm run ui:deploy` to build the client application by `vite` and copy the created bundle and other assets into the serverx's public directory.
+2. From the project root directory run `npm run ui:deploy` to build the client application by `vite` and copy the created bundle and other assets (include .map files for debugging) into the server's public directory.
 3. Run `npm run server:start` to start the server, 
  or `npm run start` to start the all the scripts (vite + copy + start express server).
 4. Open the browser and navigate to `http://localhost:8099` to see the client application (index.html).
-Pay attention: we use `vite` only as bundler excluding its modularization facility. Probably it is not the most wize way to use it, but our purpose it to simplify the deployment : we want only one destination for both client and server sides. Actually, with this approarch we need to run webpack as only only one service after the deployment.
+Pay attention: in this case, we use `vite` only as bundler excluding its modularization facility. Probably it is not the most wize way to use it, but our purpose it to simplify the deployment : we want only one destination for both client and server sides. Actually, with this approarch we need to run 'node' (that includes serving 'public' directory for static resources) as the only one service after the deployment.
+```javascript
+app.use(express.static(path.join(__dirname, '../public')));
+```
 Of course, for client development only we use `vite` in a regular manner.
 
 ## Deployment

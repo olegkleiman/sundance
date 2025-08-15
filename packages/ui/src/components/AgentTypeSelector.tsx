@@ -17,18 +17,18 @@ const AgentTypeSelector: React.FC<AgentTypeSelectorProps> = ({
 
       {/* Agent Type Rectangles */}
       <div className="flex gap-8 w-full max-w-2xl">
-        {/* Fast Agent */}
+        {/* Hybrid Agent */}
         <button
           onClick={() => onSelectAgentType("fast")}
           className="flex-1 h-64 bg-white border-2 border-[#468BFF] rounded-lg hover:bg-[#8FBCFA] transition-all duration-300 shadow-md hover:shadow-lg group"
         >
           <div className="flex flex-col items-center justify-center h-full p-6">
             <div className="text-4xl font-semibold text-[#468BFF] group-hover:text-[#468BFF] mb-4">
-              Hybrid Search 
+              Search 
             </div>
             <p className="text-gray-600 text-center leading-relaxed">
-              Powered by CosmosDB, OpenAI Embeddings, Reciprocal Rank Fusion (RRF), and BM25 algorithms
-              performs initial RAG step
+              <span className="block mt-1">Powered by CosmosDB, OpenAI Embeddings, RRF/BM25 algorithms</span>
+              <span className="block mt-1">Initial RAG step</span>
             </p>
           </div>
         </button>

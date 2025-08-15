@@ -9,8 +9,10 @@
     "server:lint": "npm run lint --workspace=server",
     "server:genkit:ui": "npm run genkit:ui --workspace=server",
     "dev": "concurrently \"npm run dev --workspace=ui\" \"npm run dev --workspace=server\"",
+    "ui:clean": "rimraf ./packages/server/public/assets/*",
     "ui:deploy": "npm run build --workspace=ui && npx cpy \"./packages/ui/dist/**/*\" ./packages/server/public/ --verbose",
     "ui:build": "npm run build --workspace=ui",
+    "ui:dev": "npm run dev --workspace=ui",
     "ui:lint": "npm run lint --workspace=ui",
     "ui:preview": "npm run preview --workspace=ui"
   },
@@ -20,11 +22,13 @@
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.11",
     "@tailwindcss/postcss": "^4.1.11",
+    "@types/js-cookie": "^3.0.6",
     "autoprefixer": "^10.4.21",
     "concurrently": "^8.2.0",
     "cpy-cli": "^5.0.0",
     "eslint": "^9.32.0",
     "postcss": "^8.5.6",
+    "rimraf": "^6.0.1",
     "tailwindcss": "^4.1.11"
   },
   "keywords": [],
@@ -34,7 +38,9 @@
   "dependencies": {
     "@dqbd/tiktoken": "^1.0.21",
     "@langchain/community": "^0.3.49",
+    "js-cookie": "^3.0.5",
     "jsonwebtoken": "^9.0.2",
+    "jwt-decode": "^4.0.0",
     "redis": "^5.6.1",
     "wink-bm25-text-search": "^3.1.2",
     "wink-nlp-utils": "^2.1.0"
