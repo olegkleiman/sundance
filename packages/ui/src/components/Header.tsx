@@ -219,7 +219,7 @@ const Header = () => {
           className="relative group"
           title="⌘H or Ctrl+H"
         >
-          <div className="p-2 bg-[#468BFF] rounded-lg hover:bg-[#8FBCFA] transition-colors cursor-pointer shadow-md">
+          <div className="p-2 bg-[#468BFF] rounded-lg transition-colors cursor-pointer shadow-md">
             <Home className="text-white h-6 w-6" />
             <span className="invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 text-sm bg-white text-gray-800 rounded whitespace-nowrap border border-gray-200">
 Home (⌘H or Ctrl+H)
@@ -233,7 +233,7 @@ Home (⌘H or Ctrl+H)
           aria-label="GitHub Repository"
           className="relative group"
         >
-          <div className="p-2 bg-[#FE363B] rounded-lg hover:bg-[#FF9A9D] transition-colors cursor-pointer shadow-md">
+          <div className="p-2 bg-black rounded-lg transition-colors cursor-pointer shadow-md">
             <FaGithub className="text-white h-6 w-6" />
             <span className="invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 text-sm bg-white text-gray-800 rounded whitespace-nowrap border border-gray-200">
               GitHub Repository
@@ -247,7 +247,7 @@ Home (⌘H or Ctrl+H)
           aria-label="API Documentation"
           className="relative group"
         >
-          <div className="p-2 bg-[#FDBB11] rounded-lg hover:bg-[#F6D785] transition-colors cursor-pointer shadow-md">
+          <div className="p-2 bg-[#FDBB11] rounded-lg transition-colors cursor-pointer shadow-md">
             <BookOpen className="text-white h-6 w-6" />
             <span className="invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 text-sm bg-white text-gray-800 rounded whitespace-nowrap border border-gray-200">
               API Documentation

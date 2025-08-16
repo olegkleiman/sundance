@@ -7,7 +7,7 @@
     agentType: string;
   }
   
-  const ChatStart: React.FC<ChartStartProps> = ({
+  export const ChatStart: React.FC<ChartStartProps> = ({
     onSubmit,
     agentType,
   }) => {
