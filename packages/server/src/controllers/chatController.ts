@@ -18,6 +18,7 @@ import { ai } from '../genkit.js';
 import { hybridRetriever } from '../retrievers/hybridRetriever.js';
 
 export const stream_chunks = async (req: Request, res: Response) => {
+    
     res.setHeader("Content-Type", "text/plain");
     res.setHeader("Transfer-Encoding", "chunked");
     res.setHeader("Cache-Control", "no-cache");
@@ -25,7 +26,7 @@ export const stream_chunks = async (req: Request, res: Response) => {
     res.flushHeaders();
     
     const input = req.body.input
-    console.log(`User utterance: ${JSON.stringify(input)}\n`);
+    logger.debug(`User utterance: ${JSON.stringify(input)}\n`);
 
     try {
         const stream = await getLLMStream(input);
@@ -127,7 +128,7 @@ const getLLMStream = async (input: string) => {
     ]);
 
     logger.debug(`RAG step finished with ${docs.length} documents`);
-    console.log(`Classification: ${classification.text}`);
+    logger.debug(`Classification: ${classification.text}`);
 
     if (classification.text === "SIMPLE") {
         // For simple queries, we don't need the RAG documents.

@@ -4,7 +4,7 @@ config:
     temperature: 0.9
 input:
     schema:
-        userInput: string    
+        userInput: string
 ---
 
 {{role "system"}}

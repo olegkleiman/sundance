@@ -8,7 +8,7 @@ config:
 
 input:
     schema:
-        userInput: string    
+        userInput: string
 ---
 
 {{role "system"}}

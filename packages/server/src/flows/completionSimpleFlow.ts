@@ -21,22 +21,28 @@ export const CompletionSimpleFlow = ai.defineFlow({
         }),
 }, 
 async (input: { userInput: string }, { context }) => {
-    const prompt = ai.prompt("simple_completion");
+    
+    try {
+    
+        const prompt = ai.prompt("simple_completion");
 
-    const rendered_prompt = await prompt.render(
-        {
-            userInput: input.userInput,
-        }
-    );
-    logger.debug(rendered_prompt);
+        const rendered_prompt = await prompt.render(
+            {
+                userInput: input.userInput,
+            }
+        );
 
-    console.time('ai.generateStream');
-    const { stream } = ai.generateStream({
-        ...rendered_prompt,
-        model: gpt4oMini
-    });
-    console.timeEnd('ai.generateStream');
+        console.time('ai.generateStream');
+        const { stream } = ai.generateStream({
+            ...rendered_prompt,
+            model: gpt4oMini
+        });
+        console.timeEnd('ai.generateStream');
 
-    return stream;
+        return stream;
+    } catch (error) {
+        logger.error(`Error in CompletionSimpleFlow: ${error}`);
+        throw error; // Propagate the error to the caller
+}
 });
     
