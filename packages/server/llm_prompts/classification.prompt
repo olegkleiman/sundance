@@ -1,11 +1,7 @@
-
 ---
-model: openai/gpt-4.1-nano
+model: openai/gpt-4o-mini
 config:
-  temperature: 0.4
-  topK: 32
-  topP: 0.95
-
+    temperature: 0.9
 input:
     schema:
         userInput: string    
@@ -18,7 +14,6 @@ You are a text classification assistant. Classify the user's input into one of t
 "COMPLEX" queries are longer, require reasoning, or might need information from external tools or documents.
 
 Respond with only the category name and nothing else.
----
 
 {{role "user"}}
-User Question: "{{userInput}}"
+{{userInput}}

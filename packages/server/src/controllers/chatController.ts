@@ -10,8 +10,9 @@ import { logger } from 'genkit/logging';
 import { Document } from 'genkit/retriever';
 import { jwtDecode } from "jwt-decode";
 
-import { IngestionFlow } from '../flows/ingestionFlow.js';
-import { CompletionFlow } from '../flows/completionFlow.js';
+import { CompletionComlexFlow } from '../flows/completionComplexFlow.js';
+import { CompletionSimpleFlow } from '../flows/completionSimpleFlow.js';
+import { ClassificationFlow } from '../flows/classificationFlow.js';
 
 import { ai } from '../genkit.js';
 import { hybridRetriever } from '../retrievers/hybridRetriever.js';
@@ -79,7 +80,7 @@ export const stream_agent = async (req: Request, res: Response) => {
         logger.debug(`RAG step finished with ${docs.length} documents`);
         
         // Completion step  
-        const stream = await CompletionFlow({
+        const stream = await CompletionComlexFlow({
             userInput: input,
             retrievedDocs: docs
         }, {
@@ -109,8 +110,9 @@ export const stream_agent = async (req: Request, res: Response) => {
 }
 
 const getLLMStream = async (input: string) => {
-         // RAG step
-         const docs = await ai.retrieve({
+    // RAG and Classification steps can be run in parallel
+    const [docs, classification] = await Promise.all([
+        ai.retrieve({
             retriever: hybridRetriever, //use the custom retriever
             query: input,
             options: {
@@ -118,22 +120,33 @@ const getLLMStream = async (input: string) => {
                 preRerankK: 10,
                 customFilter: "words count > 5",
             }
-        }); 
-        logger.debug(`RAG step finished with ${docs.length} documents`);
-        
-        // Completion step  
-        const stream = await CompletionFlow({
-            userInput: input,
-            retrievedDocs: docs
-        }, {
-            context: {
-                // headers: req.headers,
-                // access_token: access_token,
-                // citizenId: req.session.citizenId
-            }
+        }),
+        ClassificationFlow({
+            userInput: input
+        })
+    ]);
+
+    logger.debug(`RAG step finished with ${docs.length} documents`);
+    console.log(`Classification: ${classification.text}`);
+
+    if (classification.text === "SIMPLE") {
+        // For simple queries, we don't need the RAG documents.
+        return CompletionSimpleFlow({
+            userInput: input
         });
-        
-        return stream;
+    }
+
+    // For complex queries, use the retrieved documents.
+    return CompletionComlexFlow({
+        userInput: input,
+        retrievedDocs: docs
+    }, {
+        context: {
+            // headers: req.headers,
+            // access_token: access_token,
+            // citizenId: req.session.citizenId
+        }
+    });
 }
 
 /**
@@ -235,7 +248,7 @@ export const completion = async (req: Request, res: Response) => {
         logger.debug(`RAG step finished with ${docs.length} documents`);
 
         // Completion step  
-        const stream = await CompletionFlow({
+        const stream = await CompletionComlexFlow({
             userInput: userUtterance,
             retrievedDocs: docs
         }, {

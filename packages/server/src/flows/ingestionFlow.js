@@ -15,7 +15,7 @@ import { XMLParser } from 'fast-xml-parser';
 import * as cheerio from 'cheerio';
 import OpenAI from "openai";
 import { chunk } from 'llm-chunk';
-import { getVectorContainer } from '../cosmosDB/utils.js';
+import { getContainer } from '../cosmosDB/utils.js';
 import { randomUUID } from "node:crypto";
 const chunkingConfig = {
     minLength: 1000,
@@ -33,7 +33,7 @@ const openai = new OpenAI({
 });
 const MAX_CHUNK_LENGTH = parseInt(process.env.MAX_CHUNK_LENGTH || "200");
 const tenantId = process.env.TENANT_ID;
-const cosmosContainer = await getVectorContainer();
+const cosmosContainer = await getContainer();
 // Accepts an array of texts and returns an array of embeddings
 export async function embedTexts(texts) {
     try {

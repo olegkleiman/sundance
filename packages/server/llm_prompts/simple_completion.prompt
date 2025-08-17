@@ -1,0 +1,14 @@
+---
+model: openai/gpt-4o-mini
+config:
+    temperature: 0.9
+input:
+    schema:
+        userInput: string    
+---
+{{role "system"}}
+
+Answeer the user's question using only the simple question. Provide the references for each fact you use.
+
+{{role "user"}}
+User Question: "{{userInput}}"

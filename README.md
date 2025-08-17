@@ -356,9 +356,19 @@ query PublicEvents {
   }
 }    
 ```
+## Global Environment Variables (.env file in root directory) 
 
-## Environment Variables (.env)
-1. [Authenticate](https://onedrive.live.com/?id=f7fcac94e18e43af8ed195c15f222c9b&cid=AAB8403F89EC60E6) to get the working file.
+[Authenticate](https://onedrive.live.com/?id=AAB8403F89EC60E6%21saeab34662db74e918f70ea9f98c833b1&cid=AAB8403F89EC60E6) to get the working file.
+```
+TAVILY_API_KEY=xxx
+OPENAI_API_KEY=xxx
+GROQ_API_KEY=xxx
+VITE_APP_URL=http://localhost:5173
+``` 
+
+## Environment Variables (.env) for 'server' workspace
+
+[Authenticate](https://onedrive.live.com/?id=AAB8403F89EC60E6%21s9c50c43acce140dfb115d96fce33106c&cid=AAB8403F89EC60E6) to get the working file.
 ```
 # Authentication
 LOGIN_URL=
@@ -395,6 +405,17 @@ INGESTION_BATCH_SIZE=10
 REDIS_CONNECTION_KEY=
 REDIS_HOST_NAME=sundance.redis.cache.windows.net
 REDIS_PORT=6389
+BM25_STORE_NAME=bm25-index.json
+```
+
+## Environment Variables (.env) for 'ui' workspace
+
+[Authenticate](https://onedrive.live.com/?id=AAB8403F89EC60E6%21s7f9736f1d4904babb601693ddd80d2a8&cid=AAB8403F89EC60E6) to get the working file.
+```
+VITE_MODE=development
+VITE_BACKEND_URL=http://localhost:8099/api
+VITE_DEV=true
+
 ```
 
 ## How to build
