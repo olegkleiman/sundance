@@ -6,7 +6,7 @@
     "type": "module",
     "scripts": {
         "build": "tsc",
-        "dev": "DEBUG=genkit:* npx tsx src/index.ts",
+        "dev": "cross-env DEBUG=genkit:* npx tsx src/index.ts",
         "lint": "npx eslint .",
         "genkit:inspect": "genkit start -- npx tsx --watch src/index.ts"
     },
