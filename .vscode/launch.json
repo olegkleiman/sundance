@@ -13,7 +13,7 @@
         "node_modules/**"
       ],
       "sourceMaps": true,
-      "outFiles": ["${workspaceFolder}/**/*.js"],
+      "autoAttachChildProcesses": true,
       "env": {
         "DEBUG": "genkit:*",
         "DEBUG_COLORS": "true",

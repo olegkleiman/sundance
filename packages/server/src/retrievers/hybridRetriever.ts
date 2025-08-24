@@ -22,7 +22,7 @@ const getDocumentHash = (doc: Document): string => {
 
 const hybridRetrieverOptionsSchema = CommonRetrieverOptionsSchema.extend({
     // 'k' is already in CommonRetrieverOptionsSchema, but you could add others:
-    preRerankK: z.number().max(1000).optional().describe("Number of documents to retrieve before potential reranking"),
+    finalK: z.number().max(1000).optional().describe("Number of documents to retrieve after reranking"),
     customFilter: z.string().optional().describe("A custom filter string"),
 });
 
@@ -74,69 +74,64 @@ export const hybridRetriever = ai.defineRetriever(
         logger.info(`Hybrid Retriever received query: "${query.text}"`);
 
         try {
-            const finalK = options.k ?? 5;
-            const searchK = options.preRerankK ?? 10; // Retrieve more documents for better reranking
+            const topK = options.k ?? 5;
+            const finalK = options.finalK ?? 10;
 
-            // --- Merge & Deduplicate Results ---
-            // Use a Map to store unique documents by content hash
-            // Assign scores from both retrieval methods.        
-            const allDocsMap = new Map<string, DocumentWithRanks>();
-            
             // 1. Perform vector (dense) and keyword (sparse) searches in parallel
             const [denseDocs, sparseDocs] = await Promise.all([
                 ai.retrieve({
                     retriever: vectorDbRetriever,
                     query,
-                    options: { k: searchK }
-                }).catch( e => {
+                    options: { k: topK }
+                }).catch(e => {
                     logger.error('Error in vectorDbRetriever:', e);
                     return [];
                 }),
                 ai.retrieve({
-                    retriever: keywordRetriever, // bm25Retriever, //
+                    retriever: keywordRetriever,
                     query,
-                    options: { k: searchK }
-                }).catch( e => {
+                    options: { k: topK }
+                }).catch(e => {
                     logger.error('Error in keywordRetriever:', e);
                     return [];
                 })
-            ]);            
+            ]);
 
-            // Actual relevance scores aren't readily available
-            denseDocs.forEach((doc, i) => {
+            // 2. Combine and deduplicate results, adding rank metadata for the reranker.
+            // Using a Map with a content hash as the key ensures unique documents.
+            const allDocsMap = new Map<string, DocumentWithRanks>();
+
+            denseDocs.forEach((doc, index) => {
                 const docHash = getDocumentHash(doc);
-                // Assign a simple rank-based score (higher rank = higher score)
-                allDocsMap.set(docHash, { doc, denseRank: i });
-            }); 
+                allDocsMap.set(docHash, { doc, denseRank: index + 1 });
+            });
 
-            sparseDocs.forEach((doc, i) => {
+            sparseDocs.forEach((doc, index) => {
                 const docHash = getDocumentHash(doc);
                 const existingDoc = allDocsMap.get(docHash);
                 if (existingDoc) {
-                    existingDoc.sparseRank = i;
+                    existingDoc.sparseRank = index + 1;
                 } else {
-                    allDocsMap.set(docHash, { doc, sparseRank: i });
+                    allDocsMap.set(docHash, { doc, sparseRank: index + 1 });
                 }
             });
+
             logger.info(`Found ${allDocsMap.size} unique documents after merging results`);
 
-            // 3. Merge and rerank results
-
-            const combinedDocsWithScores = Array.from(allDocsMap.values())
-            .map(({ doc, denseRank, sparseRank }) => 
-            {
-                doc.metadata = {
-                    ...doc.metadata || {},
-                    denseRank: denseRank ?? 0,
-                    sparseRank: sparseRank ?? 0,
-                }
-                return doc;
+            const combinedDocs = Array.from(allDocsMap.values()).map(item => {
+                item.doc.metadata = {
+                    ...item.doc.metadata,
+                    denseRank: item.denseRank,
+                    sparseRank: item.sparseRank,
+                };
+                return item.doc;
             });
 
+            // 3. Rerank the combined list of documents
             const rerankedDocs = await ai.rerank({
                 reranker: RRFusionReranker,
                 query: query,
-                documents: combinedDocsWithScores,
+                documents: combinedDocs,
                 options: { k: finalK }
             });
 

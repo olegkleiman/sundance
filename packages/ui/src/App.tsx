@@ -154,29 +154,41 @@ function App() {
         return;
       }
 
-
       const jsonResponse = await response.json();
       console.log(...jsonResponse);
+
+      const searchResults = jsonResponse.map((item: any) => {
+        return {
+          url: item.url,
+          title: item.title,
+          score: item.score,
+          published_date: item.published_date,
+          content: item.text,
+          favicon: item.favicon
+        };
+      });
+      
 
       const botResponse: ChatbotResponse = {
         type: ConversationType.TAVILY,
         isSearching: false,
         toolType: "search",
-        searchResults: [{
-          url: "https://tadata.com",
-          title: "TaData",
-          score: 2,
-          published_date: "2025-08-24",
-          content: "TaData Content",
-          favicon: "https://www.tel-aviv.gov.il/en/_layouts/15/TlvSP2013PublicSite/Images/IriaFavIcon.ico"
-        }, {
-          url: "https://tavili.com",
-          title: "Tavili",
-          score: 2,
-          published_date: "2025-08-24",
-          content: "Tavily Content",
-          favicon: "https://www.tavily.com/favicon.ico" 
-        }],
+        searchResults: searchResults,
+        // [{
+        //   url: "https://tadata.com",
+        //   title: "TaData",
+        //   score: 2,
+        //   published_date: "2025-08-24",
+        //   content: "TaData Content",
+        //   favicon: "https://www.tel-aviv.gov.il/en/_layouts/15/TlvSP2013PublicSite/Images/IriaFavIcon.ico"
+        // }, {
+        //   url: "https://tavili.com",
+        //   title: "Tavili",
+        //   score: 2,
+        //   published_date: "2025-08-24",
+        //   content: "Tavily Content",
+        //   favicon: "https://www.tavily.com/favicon.ico" 
+        // }],
         toolOperations: {
           search: {
             active: 1,
@@ -186,7 +198,7 @@ function App() {
           extract: { active: 0, completed: 0, totalUrls: [] as any[] },
           crawl: { active: 0, completed: 0, totalUrls: [] as any[] },
         },
-        recapMessage: "Search result 1"
+        recapMessage: jsonResponse[0].text //"Search result 1"
       };
 
       setMessages((prev) => [...prev, { 

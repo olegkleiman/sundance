@@ -44,7 +44,7 @@ export const keywordRetriever = ai.defineRetriever(
             }
             const keywords = JSON.parse(keywordsText);
 
-            const whereClause = keywords.map( (k: string) => `CONTAINS(c.payload.text, "${k}", true)` ).join(" OR ");
+            const whereClause = keywords.map( (k: string) => `CONTAINS(c.payload.text, "${k}", true)` ).join(" AND ");
             const querySpec = {
                 query: `SELECT TOP @k c.id, c.payload FROM c WHERE ${whereClause}`,
                 parameters: [

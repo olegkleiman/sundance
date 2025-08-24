@@ -118,6 +118,21 @@ const ChatUI: React.FC<ChatUIProps> = ({
 
                 {message.response && (
                   <>
+
+                        <div className="flex items-center justify-start mt-0">
+                          <StreamingComponent
+                            recapMessage={
+                              message.response.recapMessage
+                                ? message.response.recapMessage
+                                : recapMessage
+                                  ? recapMessage
+                                  : ""
+                            }
+                            isSearching={message.response.isSearching}
+                            error={message.response.error}
+                          />
+                        </div>                  
+
                     {message.response.type === ConversationType.TAVILY && (
                       <>
                         <div className="flex items-center justify-start gap-2">
@@ -498,19 +513,7 @@ const ChatUI: React.FC<ChatUIProps> = ({
                       </>
                     )}
 
-                    <div className="flex items-center justify-start mt-0">
-                      <StreamingComponent
-                        recapMessage={
-                          message.response.recapMessage
-                            ? message.response.recapMessage
-                            : recapMessage
-                              ? recapMessage
-                              : ""
-                        }
-                        isSearching={message.response.isSearching}
-                        error={message.response.error}
-                      />
-                    </div>
+
                   </>
                 )}
 

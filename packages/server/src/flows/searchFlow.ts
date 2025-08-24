@@ -25,7 +25,7 @@ export const SearchFlow = ai.defineFlow(
             query: input,
             options: {
                 k: topK,
-                preRerankK: 10,
+                finalK: 3,
                 customFilter: "words count > 5",
             }
         });
