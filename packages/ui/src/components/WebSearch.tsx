@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { LoaderCircle, ChevronDown, ChevronUp, Globe } from "lucide-react";
 import { SearchResult } from "../App";
-import { convertDateFormat, getWebsiteName, truncateString, cleanMarkdownForPreview } from "../common/utils";
+// import { convertDateFormat, getWebsiteName, truncateString, cleanMarkdownForPreview } from "../common/utils";
+import { convertDateFormat, getWebsiteName} from "../common/utils";
 
 interface WebSearchProps {
   searchResults: SearchResult[];
@@ -12,7 +13,7 @@ interface WebSearchProps {
 const WebSearchResults: React.FC<WebSearchProps> = ({
   searchResults,
   operationCount: _operationCount,
-}) => {
+}: WebSearchProps) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [showAllResults, setShowAllResults] = useState(false);
@@ -78,7 +79,7 @@ const WebSearchResults: React.FC<WebSearchProps> = ({
                                 onError={(e) => {
                                   const parent = e.currentTarget.parentElement;
                                   if (parent) {
-                                    parent.innerHTML = '<svg class="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>';
+                                    parent.innerHTML = '<svg class="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="m12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>';
                                   }
                                 }}
                               />
@@ -128,7 +129,12 @@ const WebSearchResults: React.FC<WebSearchProps> = ({
                   {searchResults[hoveredIndex].title}
                 </h3>
                 <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                  {truncateString(cleanMarkdownForPreview(searchResults[hoveredIndex].content))}
+                  {(() => {
+                    // const cleanString = cleanMarkdownForPreview(searchResults[hoveredIndex].content);
+                    // console.log(cleanString);
+                    // return truncateString(cleanString);
+                    return searchResults[hoveredIndex].content;
+                  })()}
                 </p>
               </div>
             )}
