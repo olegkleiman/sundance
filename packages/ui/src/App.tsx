@@ -118,10 +118,88 @@ function App() {
 
   const submitMessage = async (input: string) => {
     const message = { userMessage: input };
-    setMessages((prev) => [...prev, message]);
 
-    await fetchStreamingData(input);
+    if( selectedAgentType === "fast") {
+      await fetchSearchData(input);
+
+    } else {
+
+      setMessages((prev) => [...prev, message]);
+
+      await fetchStreamingData(input);
+    }
   };
+
+  const fetchSearchData = async (query: string) => {
+
+    const id = threadId || cuid();
+
+    try {
+      const response = await fetch(`${BASE_URL}/chat/search`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          accept: "application/json",
+          authorization: `Bearer ${auth.getToken()}`,
+        },
+        body: JSON.stringify({
+          input: query,
+          thread_id: threadId || id,
+          agent_type: selectedAgentType || "fast",
+        }),
+      });
+
+      if (!response.body) {
+        console.error("No body in response, streaming not supported");
+        return;
+      }
+
+
+      const jsonResponse = await response.json();
+      console.log(...jsonResponse);
+
+      const botResponse: ChatbotResponse = {
+        type: ConversationType.TAVILY,
+        isSearching: false,
+        toolType: "search",
+        searchResults: [{
+          url: "https://tadata.com",
+          title: "TaData",
+          score: 2,
+          published_date: "2025-08-24",
+          content: "TaData Content",
+          favicon: "https://www.tel-aviv.gov.il/en/_layouts/15/TlvSP2013PublicSite/Images/IriaFavIcon.ico"
+        }, {
+          url: "https://tavili.com",
+          title: "Tavili",
+          score: 2,
+          published_date: "2025-08-24",
+          content: "Tavily Content",
+          favicon: "https://www.tavily.com/favicon.ico" 
+        }],
+        toolOperations: {
+          search: {
+            active: 1,
+            completed: 1,
+            totalQueries: [] //"1", "2", "3"]
+          },
+          extract: { active: 0, completed: 0, totalUrls: [] as any[] },
+          crawl: { active: 0, completed: 0, totalUrls: [] as any[] },
+        },
+        recapMessage: "Search result 1"
+      };
+
+      setMessages((prev) => [...prev, { 
+                                      userMessage: query,
+                                      response: botResponse
+                                    }]);
+      updateLastMessageResponse(botResponse);
+        
+    } catch(err: unknown) {
+      console.error(err);
+    }
+  };
+
   
   const handleAgentTypeSelection = (agentType: string) => {
     setSelectedAgentType(agentType);

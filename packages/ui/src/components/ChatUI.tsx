@@ -122,8 +122,7 @@ const ChatUI: React.FC<ChatUIProps> = ({
                       <>
                         <div className="flex items-center justify-start gap-2">
                           <img
-                            src="/tavilylogo.png"
-                            alt="Tavily Logo"
+                            src="https://www.tel-aviv.gov.il/en/_layouts/15/TlvSP2013PublicSite/Images/IriaFavIcon.ico"
                             className="h-8 w-auto object-contain"
                           />
                           <div className="text-sm text-gray-500">

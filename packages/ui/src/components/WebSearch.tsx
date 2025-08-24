@@ -32,7 +32,7 @@ const WebSearchResults: React.FC<WebSearchProps> = ({
             </>
           ) : (
             <span className="font-semibold text-gray-700">
-              Web search complete
+              Additional search results
             </span>
           )}
         </div>

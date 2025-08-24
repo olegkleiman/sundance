@@ -11,7 +11,7 @@ import { SearchFlow } from '../flows/searchFlow.js';
 
 export const search = async(req: Request, res: Response) => {
     try {
-        const docs: Document[] = await SearchFlow(req.body.data);
+        const docs: Document[] = await SearchFlow(req.body.input);
         
         // Process documents safely, handling potentially undefined metadata
         const processedDocs = docs.map(doc => ({
